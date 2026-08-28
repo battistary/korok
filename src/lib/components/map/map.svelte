@@ -1,0 +1,669 @@
+<script lang="ts" module>
+	export type Area = {
+		points: [number, number][];
+		color: string;
+		id: number;
+	};
+
+	export type MarkerK = {
+		lng: number;
+		lat: number;
+		number: number;
+		id: string;
+	};
+</script>
+
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import * as maplibregl from 'maplibre-gl';
+	import {
+		type Map as MapLibreMap,
+		type MapMouseEvent,
+		type MapLayerMouseEvent,
+		type GeoJSONSource
+	} from 'maplibre-gl';
+
+	import type { FeatureCollection, Point, Polygon, LineString } from 'geojson';
+
+	import * as Card from '../ui/card/';
+	import { Button } from '../ui/button';
+	import { Badge } from '../ui/badge';
+	import { cn, tripleNumber } from '$lib/utils';
+	import { zeldaStyle } from './zelda-style';
+	import { browser } from '$app/env';
+
+	let element: HTMLElement;
+
+	let {
+		markers,
+		areas,
+		isAdmin,
+		onNewArea,
+		onDeleteArea,
+		onNewKorok,
+		onDeleteKorok
+	}: {
+		markers: MarkerK[];
+		areas?: Area[];
+		isAdmin?: boolean;
+		onNewArea?: (area: Area) => void;
+		onDeleteArea?: (id: number) => void;
+		onNewKorok?: (pos: [number, number]) => void;
+		onDeleteKorok?: (id: string) => void;
+	} = $props();
+
+	let map: MapLibreMap;
+	let mounted = $state(false);
+
+	let clickMode: '' | 'new-korok' | 'new-area' = $state('');
+
+	let newCurrentArea: {
+		points: [number, number][];
+		closed: boolean;
+		color: string;
+	} = $state({
+		points: [],
+		closed: false,
+		color: ''
+	});
+
+	let newPointMarkers: maplibregl.Marker[] = [];
+
+	let polyContext:
+		| {
+				open: boolean;
+				x: number;
+				y: number;
+				id: number;
+				type: 'area';
+		  }
+		| {
+				open: boolean;
+				x: number;
+				y: number;
+				id: string;
+				type: 'korok';
+		  } = $state({
+		open: false,
+		x: 0,
+		y: 0,
+		id: 0,
+		type: 'area'
+	});
+
+	let isMobile = $state(false);
+
+	const mediaQuery = browser ? window.matchMedia('(max-width: 640px)') : null;
+
+	const changeMedia = (e: MediaQueryListEvent) => {
+		isMobile = e.matches;
+	};
+
+	/*
+	 * ================================================================
+	 * GEOJSON
+	 * ================================================================
+	 */
+
+	function createKorokGeoJSON(markers: MarkerK[]): FeatureCollection<Point> {
+		return {
+			type: 'FeatureCollection',
+			features: markers.map((marker) => ({
+				type: 'Feature',
+				geometry: {
+					// GeoJSON / MapLibre = [longitude, latitude]
+					type: 'Point',
+					coordinates: [marker.lng, marker.lat]
+				},
+				properties: {
+					id: marker.id,
+					number: '#' + tripleNumber(marker.number)
+				}
+			}))
+		};
+	}
+
+	function createAreaGeoJSON(areas: Area[] | undefined): FeatureCollection<Polygon> {
+		return {
+			type: 'FeatureCollection',
+			features: (areas ?? [])
+				.filter((area) => area.points.length >= 3)
+				.map((area) => {
+					const coordinates = area.points.map(([lat, lng]) => [lng, lat] as [number, number]);
+
+					/*
+					 * GeoJSON polygons must be closed.
+					 */
+					coordinates.push(coordinates[0]);
+
+					return {
+						type: 'Feature',
+						geometry: {
+							type: 'Polygon',
+							coordinates: [coordinates]
+						},
+						properties: {
+							id: area.id,
+							color: area.color
+						}
+					};
+				})
+		};
+	}
+
+	/*
+	 * ================================================================
+	 * KOROK SOURCE
+	 * ================================================================
+	 */
+
+	function updateKoroks() {
+		if (!map || !mounted) return;
+
+		const source = map.getSource('koroks') as GeoJSONSource | undefined;
+
+		if (!source) return;
+
+		source.setData(createKorokGeoJSON(markers));
+	}
+
+	/*
+	 * ================================================================
+	 * AREAS
+	 * ================================================================
+	 */
+
+	function updateAreas() {
+		if (!map || !mounted) return;
+
+		const source = map.getSource('areas') as GeoJSONSource | undefined;
+
+		if (!source) return;
+
+		source.setData(createAreaGeoJSON(areas));
+	}
+
+	/*
+	 * ================================================================
+	 * AREA CONTEXT MENU
+	 * ================================================================
+	 */
+
+	function onAreaContextMenu(e: MapLayerMouseEvent) {
+		const feature = e.features?.[0];
+
+		if (!feature) return;
+
+		const id = Number(feature.properties?.id);
+
+		if (!Number.isFinite(id)) return;
+
+		polyContext = {
+			open: true,
+			x: e.originalEvent.clientX,
+			y: e.originalEvent.clientY + document.documentElement.scrollTop,
+			id,
+			type: 'area'
+		};
+	}
+
+	/*
+	 * ================================================================
+	 * KOROK CONTEXT MENU
+	 * ================================================================
+	 */
+
+	function onKorokContextMenu(e: MapLayerMouseEvent) {
+		const feature = e.features?.[0];
+
+		if (!feature) return;
+
+		const id = feature.properties?.id;
+
+		if (!id) return;
+
+		polyContext = {
+			open: true,
+			x: e.originalEvent.clientX,
+			y: e.originalEvent.clientY + document.documentElement.scrollTop,
+			id: String(id),
+			type: 'korok'
+		};
+	}
+
+	/*
+	 * ================================================================
+	 * NEW AREA
+	 * ================================================================
+	 */
+
+	function updateNewArea() {
+		if (!map || !mounted) return;
+
+		const source = map.getSource('new-area') as GeoJSONSource | undefined;
+
+		if (!source) return;
+
+		const coordinates = newCurrentArea.points.map(([lat, lng]) => [lng, lat] as [number, number]);
+
+		const data: FeatureCollection<LineString> = {
+			type: 'FeatureCollection',
+			features:
+				coordinates.length > 0
+					? [
+							{
+								type: 'Feature',
+								geometry: {
+									type: 'LineString',
+									coordinates
+								},
+								properties: {}
+							}
+						]
+					: []
+		};
+
+		source.setData(data);
+
+		updateNewPointMarkers();
+	}
+
+	function updateNewPointMarkers() {
+		clearNewPointMarkers();
+
+		for (const [index, point] of newCurrentArea.points.entries()) {
+			const button = document.createElement('button');
+
+			button.type = 'button';
+
+			button.className =
+				'flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-primary text-xs font-bold text-primary-foreground shadow-lg';
+
+			button.textContent = index === 0 && newCurrentArea.points.length >= 3 ? '✓' : '+';
+
+			button.addEventListener('click', (event) => {
+				event.stopPropagation();
+
+				if (index === 0 && newCurrentArea.points.length >= 3) {
+					finishNewArea();
+				}
+			});
+
+			const marker = new maplibregl.Marker({
+				element: button,
+				anchor: 'center'
+			})
+				.setLngLat([point[1], point[0]])
+				.addTo(map);
+
+			newPointMarkers.push(marker);
+		}
+	}
+
+	function clearNewPointMarkers() {
+		for (const marker of newPointMarkers) {
+			marker.remove();
+		}
+
+		newPointMarkers = [];
+	}
+
+	function finishNewArea() {
+		if (newCurrentArea.points.length < 3) return;
+
+		newCurrentArea.closed = true;
+
+		onNewArea?.({
+			color: newCurrentArea.color,
+			points: [...newCurrentArea.points],
+			id: 0
+		});
+
+		clearNewPointMarkers();
+
+		newCurrentArea = {
+			closed: false,
+			color: '',
+			points: []
+		};
+
+		clickMode = '';
+
+		updateNewArea();
+	}
+
+	/*
+	 * ================================================================
+	 * MAP CLICK
+	 * ================================================================
+	 */
+
+	function onMapClick(e: MapMouseEvent) {
+		polyContext.open = false;
+
+		if (!isAdmin) return;
+
+		if (clickMode === 'new-korok') {
+			/*
+			 * MapLibre gives us longitude/latitude.
+			 *
+			 * Your application API expects latitude/longitude.
+			 */
+			onNewKorok?.([e.lngLat.lat, e.lngLat.lng]);
+
+			clickMode = '';
+
+			return;
+		}
+
+		if (clickMode === 'new-area') {
+			/*
+			 * Keep your application's [lat, lng] format.
+			 */
+			newCurrentArea.points.push([e.lngLat.lat, e.lngLat.lng]);
+
+			updateNewArea();
+		}
+	}
+
+	/*
+	 * ================================================================
+	 * INITIALIZATION
+	 * ================================================================
+	 */
+
+	onMount(() => {
+		if (!browser) return;
+
+		mediaQuery?.addEventListener('change', changeMedia);
+
+		isMobile = mediaQuery?.matches ?? false;
+
+		map = new maplibregl.Map({
+			container: element,
+
+			style: zeldaStyle,
+			/*
+			 * MapLibre = [longitude, latitude]
+			 */
+			center: [-73.68059092559635, 42.72961061168427],
+
+			zoom: isMobile ? 14.5 : 16,
+
+			minZoom: 13,
+			maxZoom: 17,
+
+			/*
+			 * southwest -> northeast
+			 *
+			 * Each coordinate is [lng, lat].
+			 */
+			maxBounds: [
+				[-73.68709629925435, 42.72091207686022],
+				[-73.66426533611958, 42.73957413451996]
+			],
+			rollEnabled: false,
+			pitchWithRotate: false,
+			attributionControl: {
+				compact: true
+			}
+		});
+
+		map.addControl(new maplibregl.NavigationControl(), 'top-right');
+
+		map.on('load', () => {
+			/*
+			 * ========================================================
+			 * KOROKS
+			 * ========================================================
+			 */
+
+			map.addSource('koroks', {
+				type: 'geojson',
+				data: createKorokGeoJSON(markers)
+			});
+
+			/*
+			 * You'll need korok.png/svg added to the map later.
+			 *
+			 * For now, use circles so we don't depend on an image.
+			 */
+			map.loadImage('/seed.png').then((img) => {
+				map.addImage('korok', img.data);
+				map.addLayer({
+					id: 'korok-markers',
+					type: 'symbol',
+					source: 'koroks',
+					layout: {
+						'icon-image': 'korok',
+						'icon-size': 1
+					}
+				});
+			});
+
+			/*
+			 * Korok numbers.
+			 */
+			map.addLayer({
+				id: 'korok-numbers',
+				type: 'symbol',
+				source: 'koroks',
+				layout: {
+					'text-field': ['to-string', ['get', 'number']],
+					'text-size': 15,
+					'text-offset': [0, 1.5],
+					'text-anchor': 'top'
+				},
+				paint: {
+					'text-color': '#4d3d29',
+					'text-halo-color': '#d8c99f',
+					'text-halo-width': 1.5
+				}
+			});
+
+			/*
+			 * ========================================================
+			 * AREAS
+			 * ========================================================
+			 */
+
+			map.addSource('areas', {
+				type: 'geojson',
+				data: createAreaGeoJSON(areas)
+			});
+
+			map.addLayer({
+				id: 'areas-fill',
+				type: 'fill',
+				source: 'areas',
+				paint: {
+					'fill-color': '#174475',
+					'fill-opacity': 0.15
+				}
+			});
+
+			map.addLayer({
+				id: 'areas-outline',
+				type: 'line',
+				source: 'areas',
+				paint: {
+					'line-color': '#1e5670',
+					'line-width': 4,
+					'line-opacity': 0.6
+				}
+			});
+
+			/*
+			 * ========================================================
+			 * NEW AREA
+			 * ========================================================
+			 */
+
+			map.addSource('new-area', {
+				type: 'geojson',
+				data: {
+					type: 'FeatureCollection',
+					features: []
+				}
+			});
+
+			map.addLayer({
+				id: 'new-area-line',
+				type: 'line',
+				source: 'new-area',
+				paint: {
+					'line-color': '#b33a3a',
+					'line-width': 3,
+					'line-dasharray': [2, 2]
+				}
+			});
+
+			/*
+			 * ========================================================
+			 * EVENTS
+			 * ========================================================
+			 */
+
+			map.on('click', onMapClick);
+
+			map.on('contextmenu', 'areas-fill', onAreaContextMenu);
+
+			map.on('contextmenu', 'korok-markers', onKorokContextMenu);
+
+			map.on('mouseenter', 'areas-fill', () => {
+				if (isAdmin) {
+					map.getCanvas().style.cursor = 'context-menu';
+				}
+			});
+
+			map.on('mouseleave', 'areas-fill', () => {
+				map.getCanvas().style.cursor = '';
+			});
+
+			map.on('mouseenter', 'korok-markers', () => {
+				map.getCanvas().style.cursor = 'context-menu';
+			});
+
+			map.on('mouseleave', 'korok-markers', () => {
+				map.getCanvas().style.cursor = '';
+			});
+
+			mounted = true;
+		});
+
+		return () => {
+			clearNewPointMarkers();
+
+			map?.remove();
+
+			mediaQuery?.removeEventListener('change', changeMedia);
+		};
+	});
+
+	/*
+	 * ================================================================
+	 * SVELTE REACTIVITY
+	 * ================================================================
+	 */
+
+	$effect(() => {
+		if (!browser || !mounted) return;
+
+		updateKoroks();
+	});
+
+	$effect(() => {
+		if (!browser || !mounted) return;
+
+		updateAreas();
+	});
+
+	$effect(() => {
+		if (!browser || !mounted) return;
+
+		updateNewArea();
+	});
+</script>
+
+<div class="flex flex-col items-center">
+	<div
+		class={cn('container h-100 w-full', {})}
+		style:cursor={clickMode === 'new-area' || clickMode === 'new-korok' ? 'crosshair' : 'default'}
+		bind:this={element}
+	></div>
+
+	{#if polyContext.open}
+		<Card.Root
+			style="left:{polyContext.x}px; top:{polyContext.y}px;"
+			class="absolute z-1000 flex flex-row rounded p-2"
+		>
+			<Button
+				variant="ghost"
+				onclick={() => {
+					if (polyContext.type === 'area' && onDeleteArea) {
+						onDeleteArea(polyContext.id);
+						polyContext.open = false;
+					} else if (polyContext.type === 'korok' && onDeleteKorok) {
+						onDeleteKorok(polyContext.id);
+						polyContext.open = false;
+					}
+				}}
+			>
+				Delete
+			</Button>
+		</Card.Root>
+	{/if}
+
+	{#if isAdmin}
+		<Card.Root class="flex flex-row items-center rounded-none p-2">
+			<Badge variant="default" class="h-8 w-30">
+				Mode: {clickMode || 'No Action'}
+			</Badge>
+
+			<Button
+				onclick={() => {
+					clickMode = 'new-area';
+
+					newCurrentArea = {
+						closed: false,
+						points: [],
+						color: 'rgba(22, 234, 237, 0.23)'
+					};
+
+					polyContext.open = false;
+				}}
+			>
+				New Area
+			</Button>
+
+			<Button
+				onclick={() => {
+					clickMode = 'new-korok';
+					polyContext.open = false;
+				}}
+			>
+				New Korok
+			</Button>
+		</Card.Root>
+	{/if}
+</div>
+
+<style>
+	:global(.maplibregl-map) {
+		font-family: inherit;
+	}
+
+	:global(.maplibregl-canvas) {
+		outline: none;
+	}
+
+	:global(.maplibregl-ctrl-group) {
+		border-radius: 0.5rem;
+		overflow: hidden;
+	}
+
+	:global(.maplibregl-ctrl-group button) {
+		background: hsl(var(--background));
+		color: hsl(var(--foreground));
+	}
+</style>
