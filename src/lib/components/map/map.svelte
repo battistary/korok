@@ -376,20 +376,13 @@
 		if (!browser) return;
 
 		mediaQuery?.addEventListener('change', changeMedia);
+
 		isMobile = mediaQuery?.matches ?? false;
-
-        // Clone the imported style to avoid mutating the original
-        const style = JSON.parse(JSON.stringify(zeldaStyle));
-
-        // Replace the tiles URL with an absolute one (using the current origin)
-        if (style.sources?.osm) {
-            style.sources.osm.tiles = [`${window.location.origin}/api/tiles/{z}/{x}/{y}`];
-        }
 
 		map = new maplibregl.Map({
 			container: element,
 
-			style: style,
+			style: { version: 8, sources: {}, layers: [] },
 			/*
 			 * MapLibre = [longitude, latitude]
 			 */
@@ -416,9 +409,47 @@
 			}
 		});
 
+		// Debug listeners
+		map.on('error', (e) => console.error('Map error:', e));
+		map.on('sourcedata', (e) => {
+			if (e.sourceId === 'osm') {
+				console.log('osm source data event:', e);
+			}
+		});
+
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
 		map.on('load', () => {
+			/*
+			 * ========================================================
+			 * ADD VECTOR SOURCE & LAYERS FROM zeldaStyle
+			 * ========================================================
+			 */
+
+			// Add the OSM vector source with absolute URL
+			map.addSource('osm', {
+				type: 'vector',
+				tiles: [`${window.location.origin}/api/tiles/{z}/{x}/{y}`],
+				minzoom: 13,
+				maxzoom: 16
+			});
+
+			// Add the contours source (GeoJSON)
+			if (zeldaStyle.sources.contours) {
+				map.addSource('contours', {
+					type: 'geojson',
+					data: '/contours.geojson'
+				});
+			}
+
+			// Add all layers from zeldaStyle in order
+			zeldaStyle.layers.forEach((layer) => {
+				// Only add layers that don't already exist (avoid duplicates)
+				if (!map.getLayer(layer.id)) {
+					map.addLayer(layer);
+				}
+			});
+
 			/*
 			 * ========================================================
 			 * KOROKS
@@ -594,7 +625,7 @@
 
 <div class="flex flex-col items-center">
 	<div
-        class="container h-[calc(100vh-80px)] w-full"
+		class={cn('container h-100 w-full', {})}
 		style:cursor={clickMode === 'new-area' || clickMode === 'new-korok' ? 'crosshair' : 'default'}
 		bind:this={element}
 	></div>
