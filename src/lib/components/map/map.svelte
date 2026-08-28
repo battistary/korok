@@ -376,13 +376,20 @@
 		if (!browser) return;
 
 		mediaQuery?.addEventListener('change', changeMedia);
-
 		isMobile = mediaQuery?.matches ?? false;
+
+        // Clone the imported style to avoid mutating the original
+        const style = JSON.parse(JSON.stringify(zeldaStyle));
+
+        // Replace the tiles URL with an absolute one (using the current origin)
+        if (style.sources?.osm) {
+            style.sources.osm.tiles = [`${window.location.origin}/api/tiles/{z}/{x}/{y}`];
+        }
 
 		map = new maplibregl.Map({
 			container: element,
 
-			style: zeldaStyle,
+			style: style,
 			/*
 			 * MapLibre = [longitude, latitude]
 			 */
@@ -587,7 +594,7 @@
 
 <div class="flex flex-col items-center">
 	<div
-        class="container h-[500px] w-full" bind:this={element}
+        class="container h-[calc(100vh-80px)] w-full"
 		style:cursor={clickMode === 'new-area' || clickMode === 'new-korok' ? 'crosshair' : 'default'}
 		bind:this={element}
 	></div>
