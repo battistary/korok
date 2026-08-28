@@ -335,18 +335,21 @@
 
 @font-face {
 	font-family: 'hylia';
-	src: url('HyliaSerifBeta-Regular.ttf') format('truetype');
+	src: url('/HyliaSerifBeta-Regular.ttf') format('truetype');
+	font-display: swap;
 }
 
 @font-face {
 	font-family: 'calamity';
-	src: url('Calamity-Regular.otf') format('opentype');
+	src: url('/Calamity-Regular.otf') format('opentype');
+	font-display: swap;
 }
 
 @font-face {
 	font-family: 'calamity';
 	font-weight: bold;
-	src: url('Calamity-Bold.otf') format('opentype');
+	src: url('/Calamity-Bold.otf') format('opentype');
+	font-display: swap;
 }
 
 h1,
