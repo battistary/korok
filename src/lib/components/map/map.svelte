@@ -382,7 +382,7 @@
 		map = new maplibregl.Map({
 			container: element,
 
-			style: { version: 8, sources: {}, layers: [] },
+			style: zeldaStyle,
 			/*
 			 * MapLibre = [longitude, latitude]
 			 */
@@ -409,47 +409,9 @@
 			}
 		});
 
-		// Debug listeners
-		map.on('error', (e) => console.error('Map error:', e));
-		map.on('sourcedata', (e) => {
-			if (e.sourceId === 'osm') {
-				console.log('osm source data event:', e);
-			}
-		});
-
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
 		map.on('load', () => {
-			/*
-			 * ========================================================
-			 * ADD VECTOR SOURCE & LAYERS FROM zeldaStyle
-			 * ========================================================
-			 */
-
-			// Add the OSM vector source with absolute URL
-			map.addSource('osm', {
-				type: 'vector',
-				tiles: [`${window.location.origin}/api/tiles/{z}/{x}/{y}`],
-				minzoom: 13,
-				maxzoom: 16
-			});
-
-			// Add the contours source (GeoJSON)
-			if (zeldaStyle.sources.contours) {
-				map.addSource('contours', {
-					type: 'geojson',
-					data: '/contours.geojson'
-				});
-			}
-
-			// Add all layers from zeldaStyle in order
-			zeldaStyle.layers.forEach((layer) => {
-				// Only add layers that don't already exist (avoid duplicates)
-				if (!map.getLayer(layer.id)) {
-					map.addLayer(layer);
-				}
-			});
-
 			/*
 			 * ========================================================
 			 * KOROKS
