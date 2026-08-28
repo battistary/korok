@@ -26,7 +26,7 @@
 
 <ModeWatcher defaultMode="light" />
 <svelte:head><link rel="icon" href="/korok_hunt_logo.png" /> <title>Korok Hunt</title></svelte:head>
-<header class="flex flex-wrap items-center border-b px-6 py-2 lg:px-16 lg:py-0">
+<header class="font-[hylia] flex flex-wrap items-center border-b px-6 py-2 lg:px-16 lg:py-0">
     <div class="flex flex-1 items-center justify-between">
         <a href="/">
             <img style="min-width:48px;" class="h-12 w-12" alt="logo" src="korok_hunt_logo.png" />
@@ -34,7 +34,15 @@
     </div>
 
     {#if !data.user}
-        {@render link({ href: '/login', label: 'Login/Register' })}
+        <a
+            href="/login"
+            class={cn(
+                'block px-3 lg:px-0 py-3 lg:p-0 mr-0 underline decoration-2 underline-offset-24 lg:underline-offset-21 decoration-transparent hover:decoration-accent',
+                page.url.pathname === '/login' && 'decoration-accent'
+            )}
+        >
+            &nbsp;&nbsp;&nbsp;&nbsp;Login/Register&nbsp;&nbsp;&nbsp;&nbsp;
+        </a>
     {:else}
         <span class="bg-secondary/60 mr-5 rounded border p-1 font-[hylia] text-secondary-foreground shadow-sm whitespace-nowrap">
             {data.user?.name}: {data.koroksFound ?? "???"}
