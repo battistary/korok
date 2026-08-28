@@ -587,7 +587,7 @@
 
 <div class="flex flex-col items-center">
 	<div
-		class={cn('container h-100 w-full', {})}
+        class="container h-[500px] w-full" bind:this={element}
 		style:cursor={clickMode === 'new-area' || clickMode === 'new-korok' ? 'crosshair' : 'default'}
 		bind:this={element}
 	></div>
