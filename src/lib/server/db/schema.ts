@@ -34,8 +34,21 @@ export const finds = sqliteTable('find', {
 	time: integer('time', { mode: 'timestamp_ms' }).notNull()
 });
 
+export const leaderBoards = sqliteTable('leader-board', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	name: text('name').notNull(),
+	description: text('description').notNull(),
+	code: text('code').notNull().unique()
+});
+
+export const leaderBoardUsers = sqliteTable('leader-board-users', {
+	leaderBoardId: integer('leader-board-id'),
+	userId: text('user-id')
+});
+
 export const userRelations = relations(user, ({ many }) => ({
-	finds: many(finds)
+	finds: many(finds),
+	leaderBoards: many(leaderBoards)
 }));
 
 export const korokRelations = relations(user, ({ many }) => ({
@@ -50,6 +63,21 @@ export const findsRelations = relations(finds, ({ one }) => ({
 	korok: one(korok, {
 		fields: [finds.userId],
 		references: [korok.id]
+	})
+}));
+
+export const leaderRelations = relations(leaderBoards, ({ many }) => ({
+	leaderBoardUsers: many(leaderBoardUsers)
+}));
+
+export const leaderBoardUserRelations = relations(leaderBoardUsers, ({ one }) => ({
+	leaderBoard: one(leaderBoards, {
+		fields: [leaderBoardUsers.leaderBoardId],
+		references: [leaderBoards.id]
+	}),
+	user: one(user, {
+		fields: [leaderBoardUsers.userId],
+		references: [user.id]
 	})
 }));
 

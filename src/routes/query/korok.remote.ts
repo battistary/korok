@@ -1,4 +1,4 @@
-import { area, korok, finds, user } from '$lib/server/db/schema';
+import { area, korok, finds, user, leaderBoardUsers, leaderBoards } from '$lib/server/db/schema';
 import { command, query } from '$app/server';
 import { db } from '$lib/server/db';
 import { and, asc, count, desc, eq, max, inArray } from 'drizzle-orm';
@@ -220,7 +220,6 @@ export const getUserFinds = query(async () => {
 		.from(user)
 		.leftJoin(finds, eq(finds.userId, user.id))
 		.leftJoin(korok, and(eq(korok.id, finds.korokId), eq(korok.isFindable, true)))
-		// No WHERE clause needed now; all users included
 		.groupBy(user.id)
 		.orderBy(desc(count(finds.id)), asc(max(finds.time)));
 	return userStats;
@@ -297,3 +296,104 @@ export const logFind = command(
 		};
 	}
 );
+
+export const getLeaderBoardFinds = query(v.object({ leaderBoardId: v.number() }), async (e) => {
+	const userStats = await db
+		.select({
+			user: user,
+			koroksFound: count(finds.id),
+			lastFoundAt: max(finds.time)
+		})
+		.from(user)
+		.leftJoin(finds, eq(finds.userId, user.id))
+		.leftJoin(korok, and(eq(korok.id, finds.korokId), eq(korok.isFindable, true)))
+		.leftJoin(leaderBoardUsers, eq(leaderBoardUsers.userId, user.id))
+		.leftJoin(leaderBoards, eq(leaderBoards.id, leaderBoardUsers.leaderBoardId))
+		.where(eq(leaderBoards.id, e.leaderBoardId))
+		.groupBy(user.id)
+		.orderBy(desc(count(finds.id)), asc(max(finds.time)));
+	return userStats;
+});
+
+export const getMyLeaderboard = query(async () => {
+	const user = await getCurrentUser();
+	if (!user) return [];
+
+	const myLeaderBoards = await db
+		.select({
+			id: leaderBoards.id,
+			name: leaderBoards.name,
+			description: leaderBoards.description,
+			code: leaderBoards.code
+		})
+		.from(leaderBoards)
+		.leftJoin(leaderBoardUsers, eq(leaderBoards.id, leaderBoardUsers.leaderBoardId))
+		.where(eq(leaderBoardUsers.userId, user.id));
+	return myLeaderBoards;
+});
+
+export const joinLeaderBoard = query(v.object({ code: v.string() }), async (e) => {
+	const user = await getCurrentUser();
+	if (!user) return false;
+	const leaderBoard = await db
+		.select({ id: leaderBoards.id })
+		.from(leaderBoards)
+		.where(eq(leaderBoards.code, e.code));
+	if (!leaderBoard[0]) return false;
+	await db.insert(leaderBoardUsers).values({
+		leaderBoardId: leaderBoard[0].id,
+		userId: user.id
+	});
+	return true;
+});
+
+export const makeLeaderBoard = command(
+	v.object({
+		name: v.string(),
+		description: v.string()
+	}),
+	async (e) => {
+		const user = await getCurrentUser();
+		if (!user) return false;
+		const leaderBoard = await db
+			.insert(leaderBoards)
+			.values({ description: e.description, name: e.name, code: generateRandomCode(6) })
+			.returning();
+		if (!leaderBoard[0]) return false;
+		await db.insert(leaderBoardUsers).values({
+			leaderBoardId: leaderBoard[0].id,
+			userId: user?.id
+		});
+		return leaderBoard[0];
+	}
+);
+
+export const deleteAllLeaderBoard = command(async () => {
+	const user = await getCurrentUser();
+	if (!user || user.role !== 'admin') return false;
+	await db.delete(leaderBoardUsers);
+	await db.delete(leaderBoards);
+	return true;
+});
+
+export const leaveLeaderBoard = command(
+	v.object({ leaderBoardId: v.number() }),
+	async ({ leaderBoardId }) => {
+		const user = await getCurrentUser();
+		if (!user) return false;
+		await db
+			.delete(leaderBoardUsers)
+			.where(
+				and(eq(leaderBoardUsers.userId, user.id), eq(leaderBoardUsers.leaderBoardId, leaderBoardId))
+			);
+		return true;
+	}
+);
+
+function generateRandomCode(length: number) {
+	let str = '';
+	for (let i = 0; i < length; i++) {
+		str += String.fromCharCode(65 + Math.round(Math.random() * 25));
+	}
+	return str;
+}

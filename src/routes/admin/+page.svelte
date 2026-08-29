@@ -7,6 +7,7 @@
 	import {
 		addAreaAdmin,
 		addKoroksAdmin,
+		deleteAllLeaderBoard,
 		deleteAreaAdmin,
 		deleteKoroksAdmin,
 		deleteReleaseKoroks,
@@ -22,7 +23,7 @@
 
 	import * as Card from '$lib/components/ui/card';
 	import Switch from '#lib/components/ui/switch/switch.svelte';
-	import { generateQRCode, tripleNumber } from '$lib/utils';
+	import { cn, generateQRCode, tripleNumber } from '$lib/utils';
 	import * as Select from '$lib/components/ui/select/index.js';
 
 	let adminDataPromise = getAdminData();
@@ -312,7 +313,7 @@
 									</div>
 
 									<div class="min-w-0">
-										<p class="text-xl font-[hylia] text-foreground">
+										<p class="font-[hylia] text-xl text-foreground">
 											Korok #{tripleNumber(korok.number)}
 										</p>
 
@@ -408,6 +409,41 @@
 		</Card.Root>
 	</section>
 </div>
+
+<!-- Release controls -->
+<section class="mb-8">
+	<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
+		<Card.Header class="border-b-2 border-border bg-secondary/50 px-6 py-5">
+			<Card.Title class="text-2xl font-black">User Management</Card.Title>
+
+			<Card.Description>Manage Users</Card.Description>
+		</Card.Header>
+
+		<Card.Content class="grid gap-4 p-6 md:grid-cols-3">
+			<!-- Delete -->
+			<div class="rounded-xl border-2 border-destructive/40 bg-destructive/10 p-5">
+				<div class="mb-4">
+					<p class="font-black text-foreground">Delete Player Leaderboards</p>
+					<p class="mt-1 text-sm leading-5 text-muted-foreground">
+						Permanently delete all player leaderboards
+					</p>
+				</div>
+
+				<Button
+					variant="destructive"
+					class="w-full"
+					onclick={async () => {
+						if (confirm('Are you sure you want to delete all leaderboards?')) {
+							await deleteAllLeaderBoard();
+						}
+					}}
+				>
+					Delete All Leaderboards
+				</Button>
+			</div>
+		</Card.Content>
+	</Card.Root>
+</section>
 
 <!-- Create / Edit Dialog -->
 <Dialog.Root bind:open={openKorok}>
@@ -516,7 +552,7 @@
 						await markers.refresh();
 						changeId = '';
 					}}
-					class={buttonVariants({ variant: 'default' })}
+					class={cn('font-black', buttonVariants({ variant: 'default' }))}
 				>
 					Save Changes
 				</Dialog.Close>

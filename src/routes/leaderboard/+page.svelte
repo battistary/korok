@@ -1,16 +1,41 @@
-<script>
+<script lang="ts">
 	import * as Card from '$lib/components/ui/card/';
 	import { ArrowDown01, ArrowUp01, SearchIcon, Trophy } from 'lucide-svelte';
-	import { getUserFinds } from '../query/korok.remote';
+	import {
+		getLeaderBoardFinds,
+		getMyLeaderboard,
+		getUserFinds,
+		joinLeaderBoard,
+		leaveLeaderBoard,
+		makeLeaderBoard
+	} from '../query/korok.remote';
 	import { Toggle } from '$lib/components/ui/toggle/';
-	import Input from '#lib/components/ui/input/input.svelte';
 	import * as InputGroup from '$lib/components/ui/input-group/';
+	import * as Select from '$lib/components/ui/select/';
+	import { Button, buttonVariants } from '$lib/components/ui/button';
+	import Label from '#lib/components/ui/label/label.svelte';
+	import type { PageServerData } from './$types';
+	import * as Dialog from '$lib/components/ui/dialog/';
+	import * as InputOTP from '$lib/components/ui/input-otp/';
+	import { cn } from '$lib/utils';
 
-	let players = await getUserFinds();
+	let { data }: PageServerData = $props();
+	let leaderboard = $state(-1);
+
+	let myLeaderboardsPromise = $derived(getMyLeaderboard());
+
+	let myLeaderboards = $derived([
+		{ id: -1, name: 'Global', code: '', description: '' },
+		...(myLeaderboardsPromise.current ?? [])
+	]);
+
+	let players = $derived(
+		leaderboard === -1 ? getUserFinds() : getLeaderBoardFinds({ leaderBoardId: leaderboard })
+	);
 	let sortDir = $state('desc');
 	let filterValue = $state('');
 	let sortedPlayers = $derived(
-		[...players]
+		[...(await players)]
 			.sort((a, b) => {
 				let el1 = sortDir === 'asc' ? a : b;
 				let el2 = sortDir === 'asc' ? b : a;
@@ -18,34 +43,105 @@
 			})
 			.filter((player) => player.user.name.includes(filterValue))
 	);
+	let leaderboardCode = $state('');
+	let newLeaderboardName = $state('');
+	let newLeaderboardDescription = $state('');
+	let joinLeaderboard = $state(false);
+	let createLeaderboard = $state(false);
 </script>
 
 <div class="mx-auto max-w-4xl px-4 py-8">
 	<!-- Header -->
-	<div class="mb-8 text-center">
-		<h1 class="text-5xl font-black tracking-tight text-foreground">Hunter Leaderboard</h1>
+	<div class="mb-8">
+		<div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+			<div>
+				<h1 class="text-5xl font-black tracking-tight text-foreground">Hunter Leaderboard</h1>
 
-		<p class="mt-2 text-lg text-muted-foreground">The greatest Korok hunters</p>
+				<p class="mt-2 text-lg text-muted-foreground">The greatest Korok hunters.</p>
+			</div>
+
+			<div
+				class="flex flex-col items-center gap-2 rounded-xl border-2 border-border bg-card px-4 py-3 shadow-sm"
+			>
+				<div class="flex items-center gap-2">
+					<span class="text-sm font-bold tracking-wider text-muted-foreground uppercase">
+						Leaderboard:
+					</span>
+
+					<Select.Root
+						type="single"
+						bind:value={() => leaderboard.toString(), (e) => (leaderboard = Number(e))}
+					>
+						<Select.Trigger class="w-28 border-2 bg-background font-black">
+							{#if leaderboard === -1}
+								Global
+							{:else}
+								{myLeaderboards.find((l) => l.id === leaderboard)?.name}
+							{/if}
+						</Select.Trigger>
+
+						<Select.Content>
+							{#each myLeaderboards as leaderboard, index (index)}
+								<Select.Item value={leaderboard.id}>
+									{leaderboard.name}
+								</Select.Item>
+							{/each}
+						</Select.Content>
+					</Select.Root>
+				</div>
+				{#if data.user}
+					<div class="flex items-center gap-2">
+						<Button onclick={() => (joinLeaderboard = true)}>Join Leaderboard</Button>
+						<Button variant="secondary" onclick={() => (createLeaderboard = true)}
+							>Create Leaderboard</Button
+						>
+					</div>
+				{/if}
+				{#if leaderboard !== -1}
+					<Button
+						variant="destructive"
+						onclick={async () => {
+							if (!confirm('Are you sure you want to leave this leaderboard?')) return;
+							await leaveLeaderBoard({ leaderBoardId: leaderboard });
+							await myLeaderboardsPromise.refresh();
+							leaderboard = -1;
+						}}>Leave Leaderboard</Button
+					>
+				{/if}
+			</div>
+		</div>
 	</div>
-
 	<!-- Leaderboard -->
 	<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
 		<Card.Header class="border-b-2 border-border bg-secondary/60 px-6 py-5">
 			<div class="flex items-center justify-between">
 				<div>
 					<Card.Title class="text-2xl font-black">
-						<Trophy class="inline" /> Hunter Rankings
+						<Trophy class="inline" />
+						{leaderboard === -1
+							? 'Hunter Rankings'
+							: myLeaderboards.find((l) => l.id === leaderboard)?.name}
+						{#if leaderboard !== -1}
+							<p class="text-xl">
+								Join: #{myLeaderboards.find((l) => l.id === leaderboard)?.code}
+							</p>
+						{/if}
 					</Card.Title>
 
-					<Card.Description class="mt-1">Ranked by Koroks found</Card.Description>
+					<Card.Description class="mt-1">
+						{leaderboard === -1
+							? 'Ranked by Koroks found'
+							: myLeaderboards.find((l) => l.id === leaderboard)?.description}
+						<br />
+					</Card.Description>
 				</div>
 
 				<div class="flex flex-col items-end gap-2">
 					<div class="grow rounded-full border-2 border-border bg-background px-4 py-2 font-bold">
 						{sortedPlayers.length} Hunter{sortedPlayers.length !== 1 ? 's' : ''}
 					</div>
-					<div class="flex gap-2">
-						<InputGroup.Root class="w-50 bg-background">
+					<div class="flex w-30 flex-wrap justify-end gap-2 lg:w-50">
+						<InputGroup.Root class="bg-background ">
 							<InputGroup.Input bind:value={filterValue} placeholder="Search..." />
 							<InputGroup.Addon>
 								<SearchIcon />
@@ -54,10 +150,10 @@
 						<Toggle
 							class="hover:bg-primary-100 w-8 bg-primary font-bold text-primary-foreground aria-pressed:bg-primary"
 							variant="outline"
-                            pressed={sortDir === 'desc'}
+							pressed={sortDir === 'desc'}
 							onPressedChange={(e) => (sortDir = e ? 'desc' : 'asc')}
 						>
-                            {#if sortDir === 'desc'}<ArrowDown01 />{:else}<ArrowUp01 />{/if}
+							{#if sortDir === 'desc'}<ArrowDown01 />{:else}<ArrowUp01 />{/if}
 						</Toggle>
 					</div>
 				</div>
@@ -70,9 +166,7 @@
 					{@const rank = index + 1}
 
 					<div
-						class={`group relative overflow-hidden rounded-xl border-2 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
-                            "bg-secondary/60"
-						}`}
+						class={`group relative overflow-hidden rounded-xl border-2 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${'bg-secondary/60'}`}
 					>
 						<div class="flex items-center gap-4">
 							<!-- Rank -->
@@ -87,14 +181,14 @@
 												: 'border-border bg-card text-muted-foreground'
 								}`}
 							>
-                            <div class="font-[hylia]">
-								#{rank}
-                            </div>
+								<div class="font-[hylia]">
+									#{rank}
+								</div>
 							</div>
 
 							<!-- Player -->
 							<div class="min-w-0 flex-1">
-								<p class="truncate text-xl font-[hylia] text-foreground">
+								<p class="truncate font-[hylia] text-xl text-foreground">
 									{player.user.name}
 								</p>
 
@@ -125,3 +219,69 @@
 		</Card.Content>
 	</Card.Root>
 </div>
+
+<Dialog.Root bind:open={joinLeaderboard}>
+	<Dialog.Content>
+		<Dialog.Title class="text-2xl font-black">Join Leaderboard</Dialog.Title>
+		<Dialog.Description class="flex flex-col gap-2">
+			<Label>Code:</Label>
+			<InputOTP.Root bind:value={leaderboardCode} maxlength={6}>
+				{#snippet children({ cells })}
+					<span class="text-2xl">#</span>
+					<InputOTP.Group>
+						{#each cells.slice(0, 6) as cell (cell)}
+							<InputOTP.Slot {cell} />
+						{/each}
+					</InputOTP.Group>
+				{/snippet}
+			</InputOTP.Root>
+		</Dialog.Description>
+		<Dialog.Footer>
+			<Dialog.Close
+				class={cn('font-black', buttonVariants({ variant: 'default' }))}
+				onclick={async () => {
+					let result = await joinLeaderBoard({ code: leaderboardCode });
+					if (result) {
+						myLeaderboardsPromise.refresh();
+					}
+				}}>Join leaderboard</Dialog.Close
+			>
+			<Dialog.Close class={buttonVariants({ variant: 'default' })}>Cancel</Dialog.Close>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
+
+<Dialog.Root bind:open={createLeaderboard}>
+	<Dialog.Content>
+		<Dialog.Title class="text-2xl font-black">Create Leaderboard</Dialog.Title>
+		<Dialog.Description class="flex flex-col gap-2">
+			<Label>Name:</Label>
+			<InputGroup.Root>
+				<InputGroup.Input bind:value={newLeaderboardName} type="text" placeholder="Name" />
+			</InputGroup.Root>
+			<Label>Description:</Label>
+			<InputGroup.Root>
+				<InputGroup.Input
+					bind:value={newLeaderboardDescription}
+					type="textarea"
+					placeholder="Description"
+				/>
+			</InputGroup.Root>
+		</Dialog.Description>
+		<Dialog.Footer>
+			<Dialog.Close
+				class={buttonVariants({ variant: 'default' })}
+				onclick={async () => {
+					let result = await makeLeaderBoard({
+						name: newLeaderboardName,
+						description: newLeaderboardDescription
+					});
+					if (result) {
+						myLeaderboardsPromise.refresh();
+					}
+				}}>Create</Dialog.Close
+			>
+			<Dialog.Close class={buttonVariants({ variant: 'default' })}>Cancel</Dialog.Close>
+		</Dialog.Footer>
+	</Dialog.Content>
+</Dialog.Root>
