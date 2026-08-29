@@ -408,7 +408,21 @@
 				compact: true
 			}
 		});
+		map.on('error', (e) => {
+			console.error('[MapLibre error]', e);
+		});
 
+		map.on('sourcedataloading', (e) => {
+			console.log('[MapLibre source loading]', e.sourceId);
+		});
+
+		map.on('sourcedata', (e) => {
+			console.log('[MapLibre source data]', e.sourceId, e.isSourceLoaded);
+		});
+
+		map.on('styledata', () => {
+			console.log('[MapLibre style loaded]');
+		});
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
 		map.on('load', () => {
