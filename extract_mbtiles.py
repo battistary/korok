@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import gzip
 import sqlite3
 import sys
 from pathlib import Path
@@ -30,6 +31,11 @@ def extract_mbtiles(mbtiles_path: str, output_dir: str):
             # MBTiles uses TMS coordinates.
             # MapLibre/XYZ uses the opposite Y coordinate.
             xyz_y = (1 << z) - 1 - tms_y
+
+            # Decompress gzip-compressed tile data.
+            # If the tile isn't compressed, use it as-is.
+            if tile_data[:2] == b"\x1f\x8b":
+                tile_data = gzip.decompress(tile_data)
 
             tile_dir = output / str(z) / str(x)
             tile_dir.mkdir(parents=True, exist_ok=True)
