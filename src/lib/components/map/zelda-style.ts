@@ -1,4 +1,5 @@
 import type { StyleSpecification } from 'maplibre-gl';
+import * as env from '$app/env/public';
 
 export const zeldaStyle: StyleSpecification = {
 	version: 8,
@@ -6,7 +7,7 @@ export const zeldaStyle: StyleSpecification = {
 	sources: {
 		osm: {
 			type: 'vector',
-			tiles: ['/api/tiles/{z}/{x}/{y}'],
+			tiles: [env.ORIGIN + '/api/tiles/{z}/{x}/{y}'],
 			minzoom: 13,
 			maxzoom: 16
 		},
