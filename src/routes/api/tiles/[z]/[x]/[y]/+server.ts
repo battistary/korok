@@ -1,31 +1,22 @@
 import { error } from '@sveltejs/kit';
-import Database from 'better-sqlite3';
-import type { RequestHandler } from './$types';
+import { readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 
-let db: Database.Database | undefined;
-
-function getDatabase() {
-	if (!db) {
-		const path = 'data/rpi-troy.mbtiles';
-
-		db = new Database(path, {
-			readonly: true
-		});
-
-		db.pragma('query_only = ON');
-	}
-
-	return db;
-}
-
-export const GET: RequestHandler = ({
+export async function GET({
 	params
 }: {
-	params: { x: string; y: string; z: string };
-}) => {
+	params: {
+		z: string;
+		x: string;
+		y: string;
+	};
+}) {
 	const z = Number(params.z);
 	const x = Number(params.x);
-	const y = Number(params.y);
+
+	// Remove .pbf from the parameter if SvelteKit includes it.
+	const y = Number(params.y.replace(/\.pbf$/, ''));
 
 	if (
 		!Number.isInteger(z) ||
@@ -38,43 +29,21 @@ export const GET: RequestHandler = ({
 		throw error(400, 'Invalid tile coordinates');
 	}
 
-	/*
-	 * MBTiles uses TMS tile coordinates where Y is flipped compared
-	 * to the XYZ coordinates used by MapLibre.
-	 *
-	 * TMS Y = (2^z - 1) - XYZ Y
-	 */
-	const tmsY = (1 << z) - 1 - y;
+	const tilePath = resolve('data', 'tiles', String(z), String(x), `${y}.pbf`);
 
-	if (tmsY < 0) {
-		console.log('tmsY', tmsY, 'z', z, 'y', y);
+	if (!existsSync(tilePath)) {
 		throw error(404, 'Tile not found');
 	}
 
-	const database = getDatabase();
+	const tile = await readFile(tilePath);
 
-	const row = database
-		.prepare(
-			`
-			SELECT tile_data
-			FROM tiles
-			WHERE zoom_level = ?
-			  AND tile_column = ?
-			  AND tile_row = ?
-			`
-		)
-		.get(z, x, tmsY) as { tile_data: Buffer } | undefined;
-
-	if (!row) {
-		console.log('no row', z, x, tmsY);
-		throw error(404, 'Tile not found');
-	}
-
-	return new Response(new Uint8Array(row.tile_data), {
+	return new Response(tile, {
 		headers: {
 			'Content-Type': 'application/x-protobuf',
 			'Content-Encoding': 'gzip',
+
+			// Tiles don't change during a deployment.
 			'Cache-Control': 'public, max-age=31536000, immutable'
 		}
 	});
-};
+}
