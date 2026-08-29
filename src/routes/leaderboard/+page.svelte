@@ -18,6 +18,7 @@
 	import * as Dialog from '$lib/components/ui/dialog/';
 	import * as InputOTP from '$lib/components/ui/input-otp/';
 	import { cn } from '$lib/utils';
+	import { REGEXP_ONLY_CHARS } from 'bits-ui';
 
 	let { data }: PageServerData = $props();
 	let leaderboard = $state(-1);
@@ -228,7 +229,7 @@
 			<InputOTP.Root bind:value={leaderboardCode} maxlength={6}>
 				{#snippet children({ cells })}
 					<span class="text-2xl">#</span>
-					<InputOTP.Group>
+					<InputOTP.Group pattern={REGEXP_ONLY_CHARS}>
 						{#each cells.slice(0, 6) as cell (cell)}
 							<InputOTP.Slot {cell} />
 						{/each}
