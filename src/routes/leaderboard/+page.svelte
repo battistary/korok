@@ -45,7 +45,7 @@
 						{sortedPlayers.length} Hunter{sortedPlayers.length !== 1 ? 's' : ''}
 					</div>
 					<div class="flex gap-2">
-						<InputGroup.Root class="w-40 bg-background">
+						<InputGroup.Root class="w-50 bg-background">
 							<InputGroup.Input bind:value={filterValue} placeholder="Search..." />
 							<InputGroup.Addon>
 								<SearchIcon />
