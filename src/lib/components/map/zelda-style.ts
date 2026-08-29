@@ -13,7 +13,7 @@ export const zeldaStyle: StyleSpecification = {
 		},
 		contours: {
 			type: 'geojson',
-			data: '/contours.geojson'
+			data: env.ORIGIN + '/contours.geojson'
 		}
 	},
 
