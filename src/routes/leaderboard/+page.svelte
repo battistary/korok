@@ -226,7 +226,7 @@
 		<Dialog.Title class="text-2xl font-black">Join Leaderboard</Dialog.Title>
 		<Dialog.Description class="flex flex-col gap-2">
 			<Label>Code:</Label>
-			<InputOTP.Root bind:value={leaderboardCode} maxlength={6}>
+			<InputOTP.Root inputmode="text" bind:value={leaderboardCode} maxlength={6}>
 				{#snippet children({ cells })}
 					<span class="text-2xl">#</span>
 					<InputOTP.Group pattern={REGEXP_ONLY_CHARS}>
