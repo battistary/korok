@@ -16,6 +16,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import * as maplibregl from 'maplibre-gl';
+	import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
 	import {
 		type Map as MapLibreMap,
 		type MapMouseEvent,
@@ -378,7 +379,7 @@
 		mediaQuery?.addEventListener('change', changeMedia);
 
 		isMobile = mediaQuery?.matches ?? false;
-
+		maplibregl.setWorkerUrl(workerUrl);
 		map = new maplibregl.Map({
 			container: element,
 
@@ -408,214 +409,170 @@
 				compact: true
 			}
 		});
-		map.on('error', (e) => {
-			console.error('[MapLibre error]', e);
-		});
 
-		map.on('sourcedataloading', (e) => {
-			console.log('[MapLibre source loading]', e.sourceId);
-		});
-
-		map.on('sourcedata', (e) => {
-			console.log('[MapLibre source data]', e.sourceId, e.isSourceLoaded);
-		});
-
-		map.on('styledata', () => {
-			console.log('[MapLibre style loaded]');
-		});
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
-        const loadMap = () => {
-            console.log('Map load handler running'); // <-- check this on Vercel
+		const loadMap = () => {
+			console.log('Map load handler running'); // <-- check this on Vercel
+			// ========================================================
+			// KOROKS
+			// ========================================================
 
-            // ========================================================
-            // ADD VECTOR SOURCE & LAYERS FROM zeldaStyle
-            // ========================================================
+			if (!map.getSource('koroks')) {
+				map.addSource('koroks', {
+					type: 'geojson',
+					data: createKorokGeoJSON(markers)
+				});
+			}
 
-            // Guard to avoid duplicate sources
-            if (!map.getSource('osm')) {
-                map.addSource('osm', {
-                    type: 'vector',
-                    tiles: [`${window.location.origin}/api/tiles/{z}/{x}/{y}`],
-                    minzoom: 13,
-                    maxzoom: 16
-                });
-            }
+			/*
+			 * You'll need korok.png/svg added to the map later.
+			 * For now, use circles so we don't depend on an image.
+			 */
+			map.loadImage('/seed.png').then((img) => {
+				if (!map.hasImage('korok')) {
+					map.addImage('korok', img.data);
+				}
+				if (!map.getLayer('korok-markers')) {
+					map.addLayer({
+						id: 'korok-markers',
+						type: 'symbol',
+						source: 'koroks',
+						layout: {
+							'icon-image': 'korok',
+							'icon-size': 1
+						}
+					});
+				}
+			});
 
-            // Add the contours source (GeoJSON)
-            if (!map.getSource('contours') && zeldaStyle.sources.contours) {
-                map.addSource('contours', {
-                    type: 'geojson',
-                    data: '/contours.geojson'
-                });
-            }
+			/*
+			 * Korok numbers.
+			 */
+			if (!map.getLayer('korok-numbers')) {
+				map.addLayer({
+					id: 'korok-numbers',
+					type: 'symbol',
+					source: 'koroks',
+					layout: {
+						'text-field': ['to-string', ['get', 'number']],
+						'text-size': 15,
+						'text-offset': [0, 1.5],
+						'text-anchor': 'top'
+					},
+					paint: {
+						'text-color': '#4d3d29',
+						'text-halo-color': '#d8c99f',
+						'text-halo-width': 1.5
+					}
+				});
+			}
 
-            // Add all layers from zeldaStyle in order (if not already added)
-            zeldaStyle.layers.forEach((layer) => {
-                if (!map.getLayer(layer.id)) {
-                    map.addLayer(layer);
-                }
-            });
+			// ========================================================
+			// AREAS
+			// ========================================================
 
-            // ========================================================
-            // KOROKS
-            // ========================================================
+			if (!map.getSource('areas')) {
+				map.addSource('areas', {
+					type: 'geojson',
+					data: createAreaGeoJSON(areas)
+				});
+			}
 
-            if (!map.getSource('koroks')) {
-                map.addSource('koroks', {
-                    type: 'geojson',
-                    data: createKorokGeoJSON(markers)
-                });
-            }
+			if (!map.getLayer('areas-fill')) {
+				map.addLayer({
+					id: 'areas-fill',
+					type: 'fill',
+					source: 'areas',
+					paint: {
+						'fill-color': '#174475',
+						'fill-opacity': 0.15
+					}
+				});
+			}
 
-            /*
-     * You'll need korok.png/svg added to the map later.
-     * For now, use circles so we don't depend on an image.
-     */
-            map.loadImage('/seed.png').then((img) => {
-                if (!map.hasImage('korok')) {
-                    map.addImage('korok', img.data);
-                }
-                if (!map.getLayer('korok-markers')) {
-                    map.addLayer({
-                        id: 'korok-markers',
-                        type: 'symbol',
-                        source: 'koroks',
-                        layout: {
-                            'icon-image': 'korok',
-                            'icon-size': 1
-                        }
-                    });
-                }
-            });
+			if (!map.getLayer('areas-outline')) {
+				map.addLayer({
+					id: 'areas-outline',
+					type: 'line',
+					source: 'areas',
+					paint: {
+						'line-color': '#1e5670',
+						'line-width': 4,
+						'line-opacity': 0.6
+					}
+				});
+			}
 
-            /*
-     * Korok numbers.
-     */
-            if (!map.getLayer('korok-numbers')) {
-                map.addLayer({
-                    id: 'korok-numbers',
-                    type: 'symbol',
-                    source: 'koroks',
-                    layout: {
-                        'text-field': ['to-string', ['get', 'number']],
-                        'text-size': 15,
-                        'text-offset': [0, 1.5],
-                        'text-anchor': 'top'
-                    },
-                    paint: {
-                        'text-color': '#4d3d29',
-                        'text-halo-color': '#d8c99f',
-                        'text-halo-width': 1.5
-                    }
-                });
-            }
+			// ========================================================
+			// NEW AREA
+			// ========================================================
 
-            // ========================================================
-            // AREAS
-            // ========================================================
+			if (!map.getSource('new-area')) {
+				map.addSource('new-area', {
+					type: 'geojson',
+					data: {
+						type: 'FeatureCollection',
+						features: []
+					}
+				});
+			}
 
-            if (!map.getSource('areas')) {
-                map.addSource('areas', {
-                    type: 'geojson',
-                    data: createAreaGeoJSON(areas)
-                });
-            }
+			if (!map.getLayer('new-area-line')) {
+				map.addLayer({
+					id: 'new-area-line',
+					type: 'line',
+					source: 'new-area',
+					paint: {
+						'line-color': '#b33a3a',
+						'line-width': 3,
+						'line-dasharray': [2, 2]
+					}
+				});
+			}
 
-            if (!map.getLayer('areas-fill')) {
-                map.addLayer({
-                    id: 'areas-fill',
-                    type: 'fill',
-                    source: 'areas',
-                    paint: {
-                        'fill-color': '#174475',
-                        'fill-opacity': 0.15
-                    }
-                });
-            }
+			// ========================================================
+			// EVENTS
+			// ========================================================
 
-            if (!map.getLayer('areas-outline')) {
-                map.addLayer({
-                    id: 'areas-outline',
-                    type: 'line',
-                    source: 'areas',
-                    paint: {
-                        'line-color': '#1e5670',
-                        'line-width': 4,
-                        'line-opacity': 0.6
-                    }
-                });
-            }
+			// Remove old listeners to avoid duplicates (optional)
+			map.off('click', onMapClick);
+			map.off('contextmenu', 'areas-fill', onAreaContextMenu);
+			map.off('contextmenu', 'korok-markers', onKorokContextMenu);
 
-            // ========================================================
-            // NEW AREA
-            // ========================================================
+			map.on('click', onMapClick);
+			map.on('contextmenu', 'areas-fill', onAreaContextMenu);
+			map.on('contextmenu', 'korok-markers', onKorokContextMenu);
 
-            if (!map.getSource('new-area')) {
-                map.addSource('new-area', {
-                    type: 'geojson',
-                    data: {
-                        type: 'FeatureCollection',
-                        features: []
-                    }
-                });
-            }
+			map.on('mouseenter', 'areas-fill', () => {
+				if (isAdmin) {
+					map.getCanvas().style.cursor = 'context-menu';
+				}
+			});
 
-            if (!map.getLayer('new-area-line')) {
-                map.addLayer({
-                    id: 'new-area-line',
-                    type: 'line',
-                    source: 'new-area',
-                    paint: {
-                        'line-color': '#b33a3a',
-                        'line-width': 3,
-                        'line-dasharray': [2, 2]
-                    }
-                });
-            }
+			map.on('mouseleave', 'areas-fill', () => {
+				map.getCanvas().style.cursor = '';
+			});
 
-            // ========================================================
-            // EVENTS
-            // ========================================================
+			map.on('mouseenter', 'korok-markers', () => {
+				map.getCanvas().style.cursor = 'context-menu';
+			});
 
-            // Remove old listeners to avoid duplicates (optional)
-            map.off('click', onMapClick);
-            map.off('contextmenu', 'areas-fill', onAreaContextMenu);
-            map.off('contextmenu', 'korok-markers', onKorokContextMenu);
+			map.on('mouseleave', 'korok-markers', () => {
+				map.getCanvas().style.cursor = '';
+			});
 
-            map.on('click', onMapClick);
-            map.on('contextmenu', 'areas-fill', onAreaContextMenu);
-            map.on('contextmenu', 'korok-markers', onKorokContextMenu);
+			mounted = true;
+			console.log('Map load handler finished');
+		};
 
-            map.on('mouseenter', 'areas-fill', () => {
-                if (isAdmin) {
-                    map.getCanvas().style.cursor = 'context-menu';
-                }
-            });
+		// Attach to load event
+		map.on('load', loadMap);
 
-            map.on('mouseleave', 'areas-fill', () => {
-                map.getCanvas().style.cursor = '';
-            });
-
-            map.on('mouseenter', 'korok-markers', () => {
-                map.getCanvas().style.cursor = 'context-menu';
-            });
-
-            map.on('mouseleave', 'korok-markers', () => {
-                map.getCanvas().style.cursor = '';
-            });
-
-            mounted = true;
-            console.log('Map load handler finished');
-        };
-
-        // Attach to load event
-        map.on('load', loadMap);
-
-        // If the style is already loaded, run immediately
-        if (map.isStyleLoaded()) {
-            loadMap();
-        }
+		// If the style is already loaded, run immediately
+		if (map.isStyleLoaded()) {
+			loadMap();
+		}
 
 		return () => {
 			clearNewPointMarkers();
