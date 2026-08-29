@@ -45,7 +45,7 @@
 						{sortedPlayers.length} Hunter{sortedPlayers.length !== 1 ? 's' : ''}
 					</div>
 					<div class="flex gap-2">
-						<InputGroup.Root class="w-50 bg-background">
+						<InputGroup.Root class="w-40 bg-background">
 							<InputGroup.Input bind:value={filterValue} placeholder="Search..." />
 							<InputGroup.Addon>
 								<SearchIcon />
@@ -71,13 +71,7 @@
 
 					<div
 						class={`group relative overflow-hidden rounded-xl border-2 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
-							rank === 1
-								? 'border-yellow-600/60 bg-yellow-400/40'
-								: rank === 2
-									? 'border-slate-400/60 bg-slate-300/40'
-									: rank === 3
-										? 'border-orange-700/60 bg-orange-400/40'
-										: 'border-border/70 bg-background hover:border-primary'
+                            "bg-secondary/60"
 						}`}
 					>
 						<div class="flex items-center gap-4">

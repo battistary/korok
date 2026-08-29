@@ -45,7 +45,7 @@
         </a>
     {:else}
         <span class="bg-secondary/60 mr-5 rounded border p-1 font-[hylia] text-secondary-foreground shadow-sm whitespace-nowrap">
-            {data.user?.name}: {data.koroksFound ?? "???"}
+            &nbsp;&nbsp;{data.user?.name}: {data.koroksFound ?? "???"}&nbsp;&nbsp;
         </span>
     {/if}
 
@@ -77,7 +77,7 @@
                         action="/login/?/signOut"
                         use:enhance
                     >
-                        <Button style="margin-top: 10px; margin-bottom: 8px;" class="bg-primary" variant="outline" type="submit">Sign out</Button>
+                        <Button style="margin-top: 10px; margin-bottom: 10px;" class="bg-primary" variant="outline" type="submit">Sign out</Button>
                     </form>
                 {/if}
                 <Button class="bg-card" onclick={toggleMode} variant="outline" size="icon">

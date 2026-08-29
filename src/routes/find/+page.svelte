@@ -41,24 +41,24 @@
 {#if loaded}
 	<div class="mx-auto max-w-4xl px-4 py-8">
 		<div class="mb-8 text-center">
-			<h1 class="text-5xl font-black tracking-tight text-foreground">Korok Tracker</h1>
+			<h1 class="text-5xl font-black tracking-tight text-foreground">Korok Found</h1>
 
-			<p class="mt-2 text-lg text-muted-foreground">Scan more Koroks to track your progress</p>
+			<p class="mt-2 text-lg text-muted-foreground">Scan Koroks to track your progress.</p>
 		</div>
 
 		<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
 			<Card.Header class="border-b-2 border-border bg-secondary/60 px-6 py-5">
 				<div class="flex items-center justify-between">
 					<div>
-						<Card.Title class="text-2xl font-black">
+						<Card.Title class="text-2xl font-[hylia]">
 							{#if !data.user}
-								You need to be logged in to find a korok
+								You need to be logged in to find a Korok.
 							{:else if failed}
-								Failed to find korok
+								Failed to find Korok.
 							{:else if found}
-								You already found this korok
+								You've already found me!
 							{:else}
-								You found a new korok
+								Yahaha! You found me!
 							{/if}
 						</Card.Title>
 
@@ -66,15 +66,15 @@
 							{#if !data.user}
 								Go to the login page in order to find Korok then scan again.
 							{:else if failed}
-								This korok does not exist check if it belongs to this year and try again
+								This Korok does not exist check if it belongs to this year and try again
 							{:else}
-								You have found {yourFinds} korok{yourFinds !== 1 ? 's' : ''}<br />
-								This korok has been found {korokFinds} time{korokFinds !== 1 ? 's' : ''}
+								<strong>You have found {yourFinds} Korok{yourFinds !== 1 ? 's' : ''}!</strong><br />
+								{korokFinds} other player {korokFinds === 1 ? 'has' : 's have'} found this Korok.
 							{/if}
 						</Card.Description>
 					</div>
 
-					<div class="rounded-full border-2 border-border bg-background px-4 py-2 font-bold">
+					<div class="rounded-full border-2 border-border bg-background px-4 py-2 font-[hylia]">
 						#{korok?.number ? tripleNumber(korok?.number) : '???'}
 					</div>
 				</div>
@@ -107,41 +107,3 @@
 		<Spinner class="size-60" scale="10" />
 	</div>
 {/if}
-<!-- <div class="m-8">
-	{#if !data.user}
-		<Card.Root>
-			<Card.Header>
-				<Card.Title class="flex flex-col items-center text-3xl">
-					<CircleUserRound size="20rem" strokeWidth={1} />
-					<p>You need to login or register to find a korok. Go to the login/register page.</p>
-				</Card.Title>
-			</Card.Header>
-		</Card.Root>
-	{:else if failed}
-		<Card.Root>
-			<Card.Header>
-				<Card.Title class="flex flex-col items-center text-3xl">
-					<img class="h-80" src="/unknown.svg" alt="unknown" />
-					<p>Failed to find korok. Please try again.</p>
-				</Card.Title>
-				<Card.Action class="text-3xl">#??</Card.Action>
-			</Card.Header>
-		</Card.Root>
-	{/if}
-
-	{#if korok}
-		<Card.Root>
-			<Card.Header>
-				<Card.Title class="flex flex-col items-center text-3xl">
-					<img src="/koroks/k_{korok.number}.png" alt="Korok {korok.number}" />
-					<p>{found ? 'You have already found me' : 'You found a new Korok'}</p>
-					<p>You have found {yourFinds} Korok{yourFinds === 1 ? '' : 's'}</p>
-					<p>
-						{korokFinds - 1} other {korokFinds - 1 === 1 ? 'person has' : 'people have'} found this Korok
-					</p>
-				</Card.Title>
-				<Card.Action class="text-3xl">#{korok.number}</Card.Action>
-			</Card.Header>
-		</Card.Root>
-	{/if}
-</div> -->
