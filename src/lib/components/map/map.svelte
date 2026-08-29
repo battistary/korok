@@ -389,7 +389,7 @@
 			 */
 			center: [-73.68059092559635, 42.72961061168427],
 
-			zoom: isMobile ? 14.5 : 16,
+			zoom: isMobile ? 14.3 : 15,
 
 			minZoom: 13,
 			maxZoom: 17,
@@ -400,11 +400,11 @@
 			 * Each coordinate is [lng, lat].
 			 */
 			maxBounds: [
-				[-73.68709629925435, 42.72091207686022],
-				[-73.66426533611958, 42.73957413451996]
+				[-73.7013291, 42.719666],
+				[-73.6583636, 42.740336]
 			],
 			rollEnabled: false,
-			pitchWithRotate: false,
+			// pitchWithRotate: false,
 			attributionControl: {
 				compact: true
 			}
