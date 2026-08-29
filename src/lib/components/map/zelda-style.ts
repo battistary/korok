@@ -7,7 +7,7 @@ export const zeldaStyle: StyleSpecification = {
 	sources: {
 		osm: {
 			type: 'vector',
-			tiles: [env.ORIGIN + '/api/tiles/{z}/{x}/{y}'],
+			tiles: [env.ORIGIN + '/tiles/{z}/{x}/{y}.pbf'],
 			minzoom: 13,
 			maxzoom: 16
 		},
