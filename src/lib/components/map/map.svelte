@@ -67,6 +67,9 @@
 		onDeleteKorok?: (id: string) => void;
 	} = $props();
 
+	let longPressTimer: ReturnType<typeof setTimeout> | undefined;
+	let longPressTriggered = false;
+
 	let map: MapLibreMap;
 	let mounted = $state(false);
 
@@ -214,7 +217,6 @@
 		const id = Number(feature.properties?.id);
 
 		if (!Number.isFinite(id)) return;
-
 		polyContext = {
 			open: true,
 			x: e.originalEvent.clientX,
@@ -231,7 +233,7 @@
 	 */
 
 	function onKorokContextMenu(e: MapLayerMouseEvent) {
-		if (!actions.deleteKoroks || !actions.seeDescription) return;
+		if (!actions.deleteKoroks && !actions.seeDescription) return;
 		const feature = e.features?.[0];
 
 		if (!feature) return;
@@ -422,7 +424,8 @@
 			// pitchWithRotate: false,
 			attributionControl: {
 				compact: true
-			}
+			},
+			doubleClickZoom: false
 		});
 
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
@@ -558,6 +561,28 @@
 			map.on('click', onMapClick);
 			map.on('contextmenu', 'areas-fill', onAreaContextMenu);
 			map.on('contextmenu', 'korok-markers', onKorokContextMenu);
+
+			map.on('touchstart', 'korok-markers', (e) => {
+				if (e.originalEvent.touches.length !== 1) return;
+
+				longPressTriggered = false;
+
+				longPressTimer = setTimeout(() => {
+					longPressTriggered = true;
+				}, 500);
+			});
+
+			map.on('touchmove', () => {
+				clearTimeout(longPressTimer);
+			});
+
+			map.on('touchend', 'korok-markers', (e) => {
+				if (longPressTriggered) {
+					console.log(e);
+					onKorokContextMenu(e);
+				}
+				clearTimeout(longPressTimer);
+			});
 
 			mounted = true;
 			console.log('Map load handler finished');
