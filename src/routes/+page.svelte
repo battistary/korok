@@ -64,7 +64,7 @@
 		},
         {
             question: 'Do you have any tips on how to improve?',
-            answer: "If you've made it this far down the page, you deserve some pointers on how to improve your hunting skills. As a three-time champion myself, here's my advice: Always keep your head on a swivel, examine the scenery from different perspectives, and don't give up! Try changing up your daily route through campus, and you might be surprised at how many times you've unknowingly walked past a sneaky Korok. Oh, and one more thing: don't forget to look up every once in a while!"
+            answer: "If you've made it this far down the page, you deserve some pointers on how to improve your hunting skills. As a three-time champion myself, here's my advice: Always keep your head on a swivel, examine the scenery from different perspectives, and don't give up! Try changing up your daily route through campus, and you might be surprised at how many times you've unknowingly walked past a sneaky Korok. Consider creating a Google My Map to track your finds and take notes. Oh, and one more thing: don't forget to look up every once in a while!"
         }
 	];
 </script>
