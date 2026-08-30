@@ -16,10 +16,12 @@
 		getAreas,
 		getKoroksAdmin,
 		getUserFinds,
+		releaseFindableAdmin,
 		releaseKoroks,
 		releaseUnFindableAdmin,
 		toggleAdmin,
 		toggleMuncher,
+		unreleaseKoroks,
 		updateFindableAdmin,
 		updateKoroksAdmin
 	} from '../query/korok.remote';
@@ -173,6 +175,17 @@
 					>
 						Release All
 					</Button>
+					<Button
+						class="w-full"
+						onclick={() => {
+							if (confirm('Are you sure you want to unrelease all koroks for this release?')) {
+								unreleaseKoroks({ release: currentRelease });
+								markers.refresh();
+							}
+						}}
+					>
+						UnRelease All
+					</Button>
 				</div>
 
 				<!-- Unfindable -->
@@ -197,6 +210,18 @@
 						}}
 					>
 						Make Unfindable
+					</Button>
+					<Button
+						variant="secondary"
+						class="w-full"
+						onclick={async () => {
+							if (confirm('Are you sure you want to make all koroks findable for this release?')) {
+								await releaseFindableAdmin({ release: currentRelease });
+								markers.refresh();
+							}
+						}}
+					>
+						Make findable
 					</Button>
 				</div>
 
@@ -319,7 +344,7 @@
 			</Card.Header>
 
 			<Card.Content class="p-4 sm:p-6">
-				<div class="flex flex-col gap-3">
+				<div class="flex max-h-150 flex-col gap-3 overflow-auto">
 					{#each markersFiltered as korok (korok.id)}
 						<div
 							class="rounded-xl border-2 border-border/70 bg-secondary/40 p-4 transition-all hover:border-primary hover:shadow-md"
@@ -502,7 +527,7 @@
 			</Card.Header>
 
 			<Card.Content class="p-4 sm:p-6">
-				<div class="flex flex-col gap-3">
+				<div class="flex max-h-100 flex-col gap-3 overflow-auto">
 					{#each sortedPlayers as player, index (player.user.id)}
 						{@const rank = index + 1}
 						<ContextMenu.Root>
@@ -640,6 +665,14 @@
 					<Input id="lng" type="number" step="any" bind:value={newKorok.lng} />
 				</div>
 			</div>
+			<Button
+				onclick={() => {
+					navigator.geolocation.getCurrentPosition((pos) => {
+						newKorok.lat = pos.coords.latitude;
+						newKorok.lng = pos.coords.longitude;
+					});
+				}}>My location</Button
+			>
 
 			<div>
 				<Label for="type">Korok Type</Label>

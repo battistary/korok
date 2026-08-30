@@ -74,7 +74,7 @@
 				{#if data.user?.role === 'admin'}
 					{@render link({ href: '/admin', label: 'Admin' })}
 				{/if}
-				{#if data.user?.role === 'munch' || data.user?.role === 'admin'}
+				{#if data.user?.role === 'muncher' || data.user?.role === 'admin'}
 					{@render link({ href: '/munch', label: 'Munch' })}
 				{/if}
 				{#if data.user}

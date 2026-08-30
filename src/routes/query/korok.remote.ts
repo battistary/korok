@@ -39,6 +39,20 @@ export const releaseKoroks = command(
 	}
 );
 
+export const unreleaseKoroks = command(
+	v.object({
+		release: v.number()
+	}),
+	async (e) => {
+		const user = await getCurrentUser();
+		if (user?.role === 'admin') {
+			await db.update(korok).set({ isRelease: false }).where(eq(korok.release, e.release));
+			return true;
+		}
+		return false;
+	}
+);
+
 export const releaseUnFindableAdmin = command(
 	v.object({
 		release: v.number()
@@ -47,6 +61,20 @@ export const releaseUnFindableAdmin = command(
 		const user = await getCurrentUser();
 		if (user?.role === 'admin') {
 			await db.update(korok).set({ isFindable: false }).where(eq(korok.release, e.release));
+			return true;
+		}
+		return false;
+	}
+);
+
+export const releaseFindableAdmin = command(
+	v.object({
+		release: v.number()
+	}),
+	async (e) => {
+		const user = await getCurrentUser();
+		if (user?.role === 'admin') {
+			await db.update(korok).set({ isFindable: true }).where(eq(korok.release, e.release));
 			return true;
 		}
 		return false;
