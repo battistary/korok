@@ -1,41 +1,52 @@
 import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import QRCode from 'qrcode';
-import path from 'path';
 import { tripleNumber } from '$lib/utils';
 
-// Helper to resolve static asset paths correctly in Node/Vercel
-function getStaticPath(relativePath: string): string {
-  return path.join(process.cwd(), 'static', relativePath);
-}
-
-// Safely register font once using absolute path
-try {
-  GlobalFonts.registerFromPath(
-    getStaticPath('HyliaSerifBeta-Regular.ttf'),
-    'hylia'
-  );
-} catch (err) {
-  // Catch potential re-registration errors in hot-reloading dev mode
-  console.warn('Font registration warning:', err);
-}
+let fontRegistered = false;
 
 export async function generateKorokCardBuffer(
   id: string,
   type: number,
-  number: number
+  number: number,
+  fetchFn: typeof fetch = fetch
 ): Promise<Buffer> {
-  // Load images using absolute file paths
-  const base = await loadImage(getStaticPath('korok_sticker_base.png'));
-  const overlay = await loadImage(getStaticPath(`koroks/k_${type}.png`));
-  const logo = await loadImage(getStaticPath('korok_hunt_logo.png'));
+  const origin = process.env.ORIGIN || 'http://localhost:5173';
+
+  // 1. Fetch raw ArrayBuffers
+  const [baseRes, overlayRes, logoRes] = await Promise.all([
+    fetchFn(`${origin}/korok_sticker_base.png`),
+    fetchFn(`${origin}/koroks/k_${type}.png`),
+    fetchFn(`${origin}/korok_hunt_logo.png`)
+  ]);
+
+  // Convert ArrayBuffers explicitly to Node Buffers
+  const baseBuffer = Buffer.from(await baseRes.arrayBuffer());
+  const overlayBuffer = Buffer.from(await overlayRes.arrayBuffer());
+  const logoBuffer = Buffer.from(await logoRes.arrayBuffer());
+
+  // Register Font safely as a Node Buffer
+  if (!fontRegistered) {
+    try {
+      const fontRes = await fetchFn(`${origin}/HyliaSerifBeta-Regular.ttf`);
+      const fontBuffer = Buffer.from(await fontRes.arrayBuffer());
+      GlobalFonts.register(fontBuffer, 'hylia');
+      fontRegistered = true;
+    } catch (e) {
+      console.warn('Font registration warning:', e);
+    }
+  }
+
+  // 2. Pass explicit Node Buffers into loadImage
+  const base = await loadImage(baseBuffer);
+  const overlay = await loadImage(overlayBuffer);
+  const logo = await loadImage(logoBuffer);
 
   const canvas = createCanvas(base.width, base.height);
   const ctx = canvas.getContext('2d');
 
   ctx.drawImage(base, 0, 0);
 
-  // Generate QR Code as a Buffer instead of passing a Canvas element
-  const origin = process.env.ORIGIN || 'http://localhost:5173';
+  // 3. Generate QR Code directly as a Node Buffer
   const qrBuffer = await QRCode.toBuffer(`${origin}/find?id=${id}`, {
     width: 482,
     version: 7,
@@ -46,14 +57,14 @@ export async function generateKorokCardBuffer(
   const qrImage = await loadImage(qrBuffer);
   ctx.drawImage(qrImage, 67, 67);
 
-  // Draw overlay shape and logo
+  // Draw logo box and icon
   ctx.fillStyle = '#d3973e';
   ctx.beginPath();
   ctx.rect(239, 239, 150, 150);
   ctx.fill();
   ctx.drawImage(logo, 239, 239, 150, 150);
 
-  // Calculate and draw scaled overlay
+  // Draw scaled overlay
   const multiplier = Math.min(420 / overlay.width, 500 / overlay.height);
   const ow = overlay.width * multiplier;
   const oh = overlay.height * multiplier;
@@ -61,7 +72,7 @@ export async function generateKorokCardBuffer(
   const oy = 293 - oh / 2;
   ctx.drawImage(overlay, ox, oy, ow, oh);
 
-  // Text rendering
+  // Draw text
   ctx.font = '60px hylia';
   ctx.fillStyle = '#995a05';
   ctx.textAlign = 'center';
