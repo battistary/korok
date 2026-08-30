@@ -1,22 +1,11 @@
 import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import QRCode from 'qrcode';
 import path from 'path';
-import { pathToFileURL } from 'url';
+import fs from 'fs/promises';
 import { tripleNumber } from '$lib/utils';
 
-// Determine base static path
 const staticPath = path.join(process.cwd(), 'static');
 
-function getImageUrl(filePath: string): string {
-    if (process.env.VERCEL) {
-        // On Vercel, we need a file:// URL
-        return pathToFileURL(filePath).href;
-    }
-    // Local: plain file path works
-    return filePath;
-}
-
-// Register font (path works locally and on Vercel)
 GlobalFonts.registerFromPath(
     path.join(staticPath, 'HyliaSerifBeta-Regular.ttf'),
     'hylia'
@@ -27,9 +16,14 @@ export async function generateKorokCardBuffer(
     type: number,
     number: number
 ): Promise<Buffer> {
-    const base = await loadImage(getImageUrl(path.join(staticPath, 'korok_sticker_base.png')));
-    const overlay = await loadImage(getImageUrl(path.join(staticPath, `koroks/k_${type}.png`)));
-    const logo = await loadImage(getImageUrl(path.join(staticPath, 'korok_hunt_logo.png')));
+    // Read image files as buffers (works on Vercel)
+    const baseBuffer = await fs.readFile(path.join(staticPath, 'korok_sticker_base.png'));
+    const overlayBuffer = await fs.readFile(path.join(staticPath, `koroks/k_${type}.png`));
+    const logoBuffer = await fs.readFile(path.join(staticPath, 'korok_hunt_logo.png'));
+
+    const base = await loadImage(baseBuffer);
+    const overlay = await loadImage(overlayBuffer);
+    const logo = await loadImage(logoBuffer);
 
     const canvas = createCanvas(base.width, base.height);
     const ctx = canvas.getContext('2d');
