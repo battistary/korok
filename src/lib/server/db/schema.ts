@@ -14,7 +14,8 @@ export const korok = sqliteTable('korok', {
 	lng: real('lng').notNull(),
 	release: integer('release').notNull(),
 	isRelease: integer('is-release', { mode: 'boolean' }).notNull(),
-	isFindable: integer('is-findable', { mode: 'boolean' }).default(true).notNull()
+	isFindable: integer('is-findable', { mode: 'boolean' }).default(true).notNull(),
+	isRemoved: integer('is-removed', { mode: 'boolean' }).default(false).notNull()
 });
 
 export const area = sqliteTable('area', {

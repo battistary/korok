@@ -2,15 +2,15 @@
 	import './layout.css';
 	import 'leaflet/dist/leaflet.css';
 	import { toggleMode, ModeWatcher } from 'mode-watcher';
-	import type { PageServerData } from './$types';
 	import Button from '#lib/components/ui/button/button.svelte';
 	import { enhance } from '$app/forms';
 	import { cn } from '$lib/utils';
 	import { page } from '$app/state';
 	import { MoonIcon, SunIcon } from 'lucide-svelte';
 	import 'maplibre-gl/dist/maplibre-gl.css';
+	import type { LayoutProps } from './$types';
 
-	let { children, data }: PageServerData = $props();
+	let { children, data }: LayoutProps = $props();
 </script>
 
 {#snippet link({ label, href }: { label: string; href: string })}
@@ -73,6 +73,9 @@
 				{@render link({ href: '/korok-stats', label: 'Koroks' })}
 				{#if data.user?.role === 'admin'}
 					{@render link({ href: '/admin', label: 'Admin' })}
+				{/if}
+				{#if data.user?.role === 'munch' || data.user?.role === 'admin'}
+					{@render link({ href: '/munch', label: 'Munch' })}
 				{/if}
 				{#if data.user}
 					<form

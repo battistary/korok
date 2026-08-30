@@ -11,11 +11,15 @@
 		deleteAreaAdmin,
 		deleteKoroksAdmin,
 		deleteReleaseKoroks,
+		deleteUser,
 		getAdminData,
 		getAreas,
 		getKoroksAdmin,
+		getUserFinds,
 		releaseKoroks,
 		releaseUnFindableAdmin,
+		toggleAdmin,
+		toggleMuncher,
 		updateFindableAdmin,
 		updateKoroksAdmin
 	} from '../query/korok.remote';
@@ -25,6 +29,10 @@
 	import Switch from '#lib/components/ui/switch/switch.svelte';
 	import { cn, generateQRCode, tripleNumber } from '$lib/utils';
 	import * as Select from '$lib/components/ui/select/index.js';
+	import * as InputGroup from '$lib/components/ui/input-group/';
+	import * as ContextMenu from '$lib/components/ui/context-menu/index.js';
+
+	import { ArrowDown01, ArrowUp01, Hamburger, SearchIcon, UserLock } from 'lucide-svelte';
 
 	let adminDataPromise = getAdminData();
 	let adminData = $derived(adminDataPromise.current ?? []);
@@ -35,6 +43,19 @@
 	let markers = getKoroksAdmin();
 
 	let currentRelease = $state(-1);
+
+	let playersPromise = getUserFinds();
+	let sortDir = $state('desc');
+	let filterValue = $state('');
+	let sortedPlayers = $derived(
+		[...(await playersPromise)]
+			.sort((a, b) => {
+				let el1 = sortDir === 'asc' ? a : b;
+				let el2 = sortDir === 'asc' ? b : a;
+				return el1.koroksFound - el2.koroksFound;
+			})
+			.filter((player) => player.user.name.includes(filterValue))
+	);
 
 	$effect(() => {
 		if (currentRelease === -1) {
@@ -248,7 +269,7 @@
 							isRelease: false
 						};
 					}}
-					isAdmin
+					actions={{ newAreas: true, newKoroks: true, deleteAreas: true, deleteKoroks: true }}
 				/>
 			</div>
 		</Card.Root>
@@ -410,41 +431,160 @@
 	</section>
 </div>
 
-<!-- Release controls -->
-<section class="mb-8">
-	<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
-		<Card.Header class="border-b-2 border-border bg-secondary/50 px-6 py-5">
-			<Card.Title class="text-2xl font-black">User Management</Card.Title>
+<div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+	<!-- User controls -->
+	<section class="mb-8">
+		<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
+			<Card.Header class="border-b-2 border-border bg-secondary/50 px-6 py-5">
+				<Card.Title class="text-2xl font-black">User Management</Card.Title>
 
-			<Card.Description>Manage Users</Card.Description>
-		</Card.Header>
+				<Card.Description>Manage Users</Card.Description>
+			</Card.Header>
 
-		<Card.Content class="grid gap-4 p-6 md:grid-cols-3">
-			<!-- Delete -->
-			<div class="rounded-xl border-2 border-destructive/40 bg-destructive/10 p-5">
-				<div class="mb-4">
-					<p class="font-black text-foreground">Delete Player Leaderboards</p>
-					<p class="mt-1 text-sm leading-5 text-muted-foreground">
-						Permanently delete all player leaderboards
-					</p>
+			<Card.Content class="grid gap-4 p-6 md:grid-cols-3">
+				<!-- Delete -->
+				<div class="rounded-xl border-2 border-destructive/40 bg-destructive/10 p-5">
+					<div class="mb-4">
+						<p class="font-black text-foreground">Delete Player Leaderboards</p>
+						<p class="mt-1 text-sm leading-5 text-muted-foreground">
+							Permanently delete all player leaderboards
+						</p>
+					</div>
+
+					<Button
+						variant="destructive"
+						class="w-full"
+						onclick={async () => {
+							if (confirm('Are you sure you want to delete all leaderboards?')) {
+								await deleteAllLeaderBoard();
+							}
+						}}
+					>
+						Delete All Leaderboards
+					</Button>
 				</div>
+			</Card.Content>
+		</Card.Root>
+	</section>
 
-				<Button
-					variant="destructive"
-					class="w-full"
-					onclick={async () => {
-						if (confirm('Are you sure you want to delete all leaderboards?')) {
-							await deleteAllLeaderBoard();
-						}
-					}}
-				>
-					Delete All Leaderboards
-				</Button>
-			</div>
-		</Card.Content>
-	</Card.Root>
-</section>
+	<section>
+		<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
+			<Card.Header class="border-b-2 border-border bg-secondary/50 px-6 py-5">
+				<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+					<div>
+						<Card.Title class="text-2xl font-black">Players</Card.Title>
 
+						<Card.Description>Manage players</Card.Description>
+					</div>
+					<div class="flex flex-col items-end gap-2">
+						<div class="flex w-30 flex-wrap justify-end gap-2 lg:w-50">
+							<InputGroup.Root class="bg-background ">
+								<InputGroup.Input bind:value={filterValue} placeholder="Search..." />
+								<InputGroup.Addon>
+									<SearchIcon />
+								</InputGroup.Addon>
+							</InputGroup.Root>
+							<Toggle
+								class="hover:bg-primary-100 w-8 bg-primary font-bold text-primary-foreground aria-pressed:bg-primary"
+								variant="outline"
+								pressed={sortDir === 'desc'}
+								onPressedChange={(e) => (sortDir = e ? 'desc' : 'asc')}
+							>
+								{#if sortDir === 'desc'}<ArrowDown01 />{:else}<ArrowUp01 />{/if}
+							</Toggle>
+						</div>
+					</div>
+				</div>
+			</Card.Header>
+
+			<Card.Content class="p-4 sm:p-6">
+				<div class="flex flex-col gap-3">
+					{#each sortedPlayers as player, index (player.user.id)}
+						{@const rank = index + 1}
+						<ContextMenu.Root>
+							<ContextMenu.Trigger>
+								<div
+									class={`group relative overflow-hidden rounded-xl border-2 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${'bg-secondary/60'}`}
+								>
+									<div class="flex items-center gap-4">
+										<!-- Rank -->
+										<div
+											class={`flex size-12 shrink-0 items-center justify-center rounded-full border-2 text-xl font-black ${
+												rank === 1
+													? 'border-yellow-600 bg-yellow-400/30 text-yellow-800'
+													: rank === 2
+														? 'border-slate-400 bg-slate-300/40 text-slate-700'
+														: rank === 3
+															? 'border-orange-700 bg-orange-400/30 text-orange-800'
+															: 'border-border bg-card text-muted-foreground'
+											}`}
+										>
+											<div class="font-[hylia]">
+												#{rank}
+											</div>
+										</div>
+
+										<!-- Player -->
+										<div class="min-w-0 flex-1">
+											<p class="truncate font-[hylia] text-xl text-foreground">
+												{player.user.name}
+												{#if player.user.role === 'admin'}
+													<span class="inline" title="Admin"><UserLock /></span>
+												{:else if player.user.role === 'muncher'}
+													<span class="inline" title="Muncher"><Hamburger /></span>
+												{/if}
+											</p>
+
+											{#if player.lastFoundAt}
+												<p class="mt-0.5 text-sm text-muted-foreground">
+													Last find:
+													{player.lastFoundAt.toLocaleString()}
+												</p>
+											{:else}
+												<p class="mt-0.5 text-sm text-muted-foreground">No Koroks found</p>
+											{/if}
+										</div>
+
+										<!-- Score -->
+										<div class="shrink-0 text-right">
+											<p class="text-3xl font-black text-primary">
+												{player.koroksFound}
+											</p>
+
+											<p class="text-sm font-semibold text-muted-foreground">
+												{player.koroksFound === 1 ? 'Korok' : 'Koroks'}
+											</p>
+										</div>
+									</div>
+								</div></ContextMenu.Trigger
+							>
+							<ContextMenu.Content>
+								<ContextMenu.Item
+									onclick={async () => {
+										await toggleAdmin({ userid: player.user.id });
+										playersPromise.refresh();
+									}}>Toggle Admin</ContextMenu.Item
+								>
+								<ContextMenu.Item
+									onclick={async () => {
+										await toggleMuncher({ userid: player.user.id });
+										playersPromise.refresh();
+									}}>Toggle Muncher</ContextMenu.Item
+								>
+								<ContextMenu.Item
+									onclick={async () => {
+										await deleteUser({ userid: player.user.id });
+										playersPromise.refresh();
+									}}>Delete User</ContextMenu.Item
+								>
+							</ContextMenu.Content>
+						</ContextMenu.Root>
+					{/each}
+				</div>
+			</Card.Content>
+		</Card.Root>
+	</section>
+</div>
 <!-- Create / Edit Dialog -->
 <Dialog.Root bind:open={openKorok}>
 	<Dialog.Content class="max-h-[90vh] overflow-y-auto sm:max-w-lg">

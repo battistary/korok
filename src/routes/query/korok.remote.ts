@@ -199,7 +199,15 @@ export const deleteAreaAdmin = command(
 export const getKorokFinds = query(async () => {
 	const korokStats = await db
 		.select({
-			korok: korok,
+			korok: {
+				id: korok.id,
+				type: korok.type,
+				number: korok.number,
+				release: korok.release,
+				isRelease: korok.isRelease,
+				isFindable: korok.isFindable,
+				isRemoved: korok.isRemoved
+			},
 			findCount: count(finds.id)
 		})
 		.from(korok)
@@ -397,3 +405,51 @@ function generateRandomCode(length: number) {
 	}
 	return str;
 }
+
+export const toggleAdmin = command(v.object({ userid: v.string() }), async ({ userid }) => {
+	const cu = await getCurrentUser();
+	if (!cu || cu.role !== 'admin') return false;
+	const u = await db.select().from(user).where(eq(user.id, userid));
+	if (!u[0]) return false;
+	if (u[0]?.role === 'admin') {
+		await db.update(user).set({ role: 'user' }).where(eq(user.id, userid));
+	} else {
+		await db.update(user).set({ role: 'admin' }).where(eq(user.id, userid));
+	}
+	return true;
+});
+
+export const toggleMuncher = command(v.object({ userid: v.string() }), async ({ userid }) => {
+	const cu = await getCurrentUser();
+	if (!cu || cu.role !== 'admin') return false;
+	const u = await db.select().from(user).where(eq(user.id, userid));
+	if (!u[0]) return false;
+	if (u[0]?.role === 'muncher') {
+		await db.update(user).set({ role: 'user' }).where(eq(user.id, userid));
+	} else {
+		await db.update(user).set({ role: 'muncher' }).where(eq(user.id, userid));
+	}
+	return true;
+});
+
+export const deleteUser = command(v.object({ userid: v.string() }), async ({ userid }) => {
+	const cu = await getCurrentUser();
+	if (!cu || cu.role !== 'admin') return false;
+	await db.delete(finds).where(eq(finds.userId, userid));
+	await db.delete(leaderBoardUsers).where(eq(leaderBoardUsers.userId, userid));
+	await db.delete(user).where(eq(user.id, userid));
+	return true;
+});
+
+export const markKorokRemoved = command(v.object({ korokId: v.string() }), async ({ korokId }) => {
+	await db.update(korok).set({ isRemoved: true }).where(eq(korok.id, korokId));
+	return true;
+});
+
+export const getNonRemovedKoroks = query(async () => {
+	const koroks = await db
+		.select()
+		.from(korok)
+		.where(and(eq(korok.isRelease, true), eq(korok.isFindable, true), eq(korok.isRemoved, false)));
+	return koroks;
+});

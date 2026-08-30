@@ -6,6 +6,7 @@
 	import { CircleUserRound } from 'lucide-svelte';
 	import { tripleNumber } from '$lib/utils';
 	import Spinner from '#lib/components/ui/spinner/spinner.svelte';
+	import { browser } from '$app/env';
 
 	let { data }: { data: PageData } = $props();
 	let failed = $state(false);
@@ -24,7 +25,12 @@
 		isRelease: boolean;
 	} | null = $state(null);
 	onMount(async () => {
-		if (!data.user || !data.id) return;
+		if (!browser) return;
+		if (!data.user || !data.id) {
+			document.cookie = `loggedInKorok=${data.id ?? ''}`;
+			loaded = true;
+			return;
+		}
 		let e = await logFind({ korokId: data.id, userId: data.user.id, time: new Date() });
 		if (e) {
 			korok = e.korok;
@@ -50,7 +56,7 @@
 			<Card.Header class="border-b-2 border-border bg-secondary/60 px-6 py-5">
 				<div class="flex items-center justify-between">
 					<div>
-						<Card.Title class="text-2xl font-[hylia]">
+						<Card.Title class="font-[hylia] text-2xl">
 							{#if !data.user}
 								You need to be logged in to find a Korok.
 							{:else if failed}

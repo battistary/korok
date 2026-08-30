@@ -34,20 +34,34 @@
 	import { browser } from '$app/env';
 
 	let element: HTMLElement;
-
+	let currentDescription: string = $state('');
 	let {
 		markers,
 		areas,
-		isAdmin,
+		actions = {
+			deleteKoroks: false,
+			deleteAreas: false,
+			newKoroks: false,
+			newAreas: false,
+			seeDescription: false
+		},
 		onNewArea,
 		onDeleteArea,
 		onNewKorok,
-		onDeleteKorok
+		onDeleteKorok,
+		getDescription
 	}: {
 		markers: MarkerK[];
 		areas?: Area[];
-		isAdmin?: boolean;
+		actions?: {
+			deleteKoroks?: boolean;
+			deleteAreas?: boolean;
+			newKoroks?: boolean;
+			newAreas?: boolean;
+			seeDescription?: boolean;
+		};
 		onNewArea?: (area: Area) => void;
+		getDescription?: (id: string) => Promise<string>;
 		onDeleteArea?: (id: number) => void;
 		onNewKorok?: (pos: [number, number]) => void;
 		onDeleteKorok?: (id: string) => void;
@@ -191,6 +205,8 @@
 	 */
 
 	function onAreaContextMenu(e: MapLayerMouseEvent) {
+		if (!actions.deleteAreas) return;
+
 		const feature = e.features?.[0];
 
 		if (!feature) return;
@@ -215,6 +231,7 @@
 	 */
 
 	function onKorokContextMenu(e: MapLayerMouseEvent) {
+		if (!actions.deleteKoroks || !actions.seeDescription) return;
 		const feature = e.features?.[0];
 
 		if (!feature) return;
@@ -342,9 +359,7 @@
 	function onMapClick(e: MapMouseEvent) {
 		polyContext.open = false;
 
-		if (!isAdmin) return;
-
-		if (clickMode === 'new-korok') {
+		if (clickMode === 'new-korok' && actions.newKoroks) {
 			/*
 			 * MapLibre gives us longitude/latitude.
 			 *
@@ -357,7 +372,7 @@
 			return;
 		}
 
-		if (clickMode === 'new-area') {
+		if (clickMode === 'new-area' && actions.newAreas) {
 			/*
 			 * Keep your application's [lat, lng] format.
 			 */
@@ -544,24 +559,6 @@
 			map.on('contextmenu', 'areas-fill', onAreaContextMenu);
 			map.on('contextmenu', 'korok-markers', onKorokContextMenu);
 
-			map.on('mouseenter', 'areas-fill', () => {
-				if (isAdmin) {
-					map.getCanvas().style.cursor = 'context-menu';
-				}
-			});
-
-			map.on('mouseleave', 'areas-fill', () => {
-				map.getCanvas().style.cursor = '';
-			});
-
-			map.on('mouseenter', 'korok-markers', () => {
-				map.getCanvas().style.cursor = 'context-menu';
-			});
-
-			map.on('mouseleave', 'korok-markers', () => {
-				map.getCanvas().style.cursor = '';
-			});
-
 			mounted = true;
 			console.log('Map load handler finished');
 		};
@@ -618,8 +615,23 @@
 	{#if polyContext.open}
 		<Card.Root
 			style="left:{polyContext.x}px; top:{polyContext.y}px;"
-			class="absolute z-1000 flex flex-row rounded p-2"
+			class="absolute z-1000 flex flex-col gap-0 rounded p-2"
 		>
+			{#if actions.seeDescription}
+				<Button
+					variant="ghost"
+					onclick={async () => {
+						if (polyContext.type === 'area') {
+							polyContext.open = false;
+						} else if (polyContext.type === 'korok' && getDescription) {
+							currentDescription = await getDescription(polyContext.id);
+							polyContext.open = false;
+						}
+					}}
+				>
+					See Description
+				</Button>
+			{/if}
 			<Button
 				variant="ghost"
 				onclick={() => {
@@ -637,36 +649,43 @@
 		</Card.Root>
 	{/if}
 
-	{#if isAdmin}
+	{#if actions.newAreas || actions.newKoroks}
 		<Card.Root class="flex flex-row items-center rounded-none p-2">
 			<Badge variant="default" class="h-8 w-30">
 				Mode: {clickMode || 'No Action'}
 			</Badge>
+			{#if actions.newAreas}
+				<Button
+					onclick={() => {
+						clickMode = 'new-area';
 
-			<Button
-				onclick={() => {
-					clickMode = 'new-area';
+						newCurrentArea = {
+							closed: false,
+							points: [],
+							color: 'rgba(22, 234, 237, 0.23)'
+						};
 
-					newCurrentArea = {
-						closed: false,
-						points: [],
-						color: 'rgba(22, 234, 237, 0.23)'
-					};
-
-					polyContext.open = false;
-				}}
-			>
-				New Area
-			</Button>
-
-			<Button
-				onclick={() => {
-					clickMode = 'new-korok';
-					polyContext.open = false;
-				}}
-			>
-				New Korok
-			</Button>
+						polyContext.open = false;
+					}}
+				>
+					New Area
+				</Button>
+			{/if}
+			{#if actions.newKoroks}
+				<Button
+					onclick={() => {
+						clickMode = 'new-korok';
+						polyContext.open = false;
+					}}
+				>
+					New Korok
+				</Button>
+			{/if}
+		</Card.Root>
+	{/if}
+	{#if currentDescription}
+		<Card.Root class="flex flex-row items-center rounded-none p-2">
+			{currentDescription}
 		</Card.Root>
 	{/if}
 </div>

@@ -14,13 +14,13 @@
 	import * as Select from '$lib/components/ui/select/';
 	import { Button, buttonVariants } from '$lib/components/ui/button';
 	import Label from '#lib/components/ui/label/label.svelte';
-	import type { PageServerData } from './$types';
+	import type { PageProps } from './$types';
 	import * as Dialog from '$lib/components/ui/dialog/';
 	import * as InputOTP from '$lib/components/ui/input-otp/';
 	import { cn } from '$lib/utils';
 	import { REGEXP_ONLY_CHARS } from 'bits-ui';
 
-	let { data }: PageServerData = $props();
+	let { data }: PageProps = $props();
 	let leaderboard = $state(-1);
 
 	let myLeaderboardsPromise = $derived(getMyLeaderboard());

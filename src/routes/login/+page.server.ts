@@ -6,7 +6,13 @@ import { APIError } from 'better-auth/api';
 
 export const load: PageServerLoad = (event) => {
 	if (event.locals.user) {
-		return redirect(302, '/');
+		const cookie = event.cookies.get('loggedInKorok');
+		if (cookie) {
+			event.cookies.delete('loggedInKorok', { path: '/' });
+			return redirect(302, `/find?id=${cookie}`);
+		} else {
+			return redirect(302, '/');
+		}
 	}
 	return {};
 };
@@ -32,7 +38,13 @@ export const actions: Actions = {
 			return fail(500, { message: 'Unexpected error' });
 		}
 
-		return redirect(302, '/');
+		const cookie = event.cookies.get('loggedInKorok');
+		if (cookie) {
+			event.cookies.delete('loggedInKorok', { path: '/' });
+			return redirect(302, `/find?id=${cookie}`);
+		} else {
+			return redirect(302, '/');
+		}
 	},
 	signUpEmail: async (event) => {
 		const formData = await event.request.formData();
@@ -62,8 +74,13 @@ export const actions: Actions = {
 			console.log(error);
 			return fail(500, { message: 'Unexpected error' });
 		}
-
-		return redirect(302, '/');
+		const cookie = event.cookies.get('loggedInKorok');
+		if (cookie) {
+			event.cookies.delete('loggedInKorok', { path: '/' });
+			return redirect(302, `/find?id=${cookie}`);
+		} else {
+			return redirect(302, '/');
+		}
 	},
 	signOut: async (event) => {
 		await auth.api.signOut({

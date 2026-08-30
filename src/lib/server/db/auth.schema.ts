@@ -22,7 +22,7 @@ export const user = sqliteTable("user", {
     .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
-  role: text("role", { enum: ["user", "admin"] })
+  role: text("role", { enum: ["user", "admin", "muncher"] })
     .default("user")
     .notNull(),
 });
