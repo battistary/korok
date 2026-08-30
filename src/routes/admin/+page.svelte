@@ -249,10 +249,12 @@
 						await areasPromise.refresh();
 					}}
 					onDeleteArea={async (id) => {
+						if (!confirm('Are you sure you want to delete this Area?')) return;
 						await deleteAreaAdmin({ id });
 						await areasPromise.refresh();
 					}}
 					onDeleteKorok={async (id) => {
+						if (!confirm('Are you sure you want to delete this Korok?')) return;
 						await deleteKoroksAdmin({ id });
 						await markers.refresh();
 					}}
