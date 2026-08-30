@@ -63,9 +63,11 @@
 		}
 	});
 
-	let markersFiltered = $derived(
-		markers.current?.filter((m) => m?.release === currentRelease) ?? []
-	);
+    let markersFiltered = $derived(
+    markers.current
+        ?.filter((m) => m?.release === currentRelease)
+        .sort((a, b) => a.number - b.number) ?? []
+    );
 
 	let nextType = $derived(((markersFiltered.at(-1)?.type ?? -1) + 1) % 13);
 
