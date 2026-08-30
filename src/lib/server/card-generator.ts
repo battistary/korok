@@ -1,14 +1,11 @@
 import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import QRCode from 'qrcode';
-import { fileURLToPath } from 'url';
 import path from 'path';
 import { tripleNumber } from '$lib/utils';
 
-// Compute absolute path to the static folder
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const staticPath = path.resolve(__dirname, '../../../static');
+const staticPath = path.join(process.cwd(), 'static');
 
-// Register the custom font using absolute path
+// Register font using absolute path
 GlobalFonts.registerFromPath(
     path.join(staticPath, 'HyliaSerifBeta-Regular.ttf'),
     'hylia'
@@ -19,7 +16,6 @@ export async function generateKorokCardBuffer(
     type: number,
     number: number
 ): Promise<Buffer> {
-    // Load images using absolute paths
     const base = await loadImage(path.join(staticPath, 'korok_sticker_base.png'));
     const overlay = await loadImage(path.join(staticPath, `koroks/k_${type}.png`));
     const logo = await loadImage(path.join(staticPath, 'korok_hunt_logo.png'));
