@@ -112,14 +112,14 @@
 				class="flex items-center gap-2 rounded-xl border-2 border-border bg-card px-4 py-3 shadow-sm"
 			>
 				<span class="text-sm font-bold tracking-wider text-muted-foreground uppercase">
-					Release
+					Release:
 				</span>
 
 				<Select.Root
 					type="single"
 					bind:value={() => currentRelease.toString(), (e) => (currentRelease = Number(e))}
 				>
-					<Select.Trigger class="w-28 border-2 bg-background font-black">
+					<Select.Trigger class="w-28 border-2 bg-background font-black truncate">
 						{#if currentRelease === -1}
 							No Releases
 						{:else}
@@ -127,9 +127,9 @@
 						{/if}
 					</Select.Trigger>
 
-					<Select.Content>
+					<Select.Content class="w-28 truncate">
 						{#each adminData as release, index (index)}
-							<Select.Item value={release.release + ''}>
+							<Select.Item value={release.release + ''} class="truncate">
 								Release {release.release}
 							</Select.Item>
 						{/each}

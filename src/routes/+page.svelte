@@ -88,7 +88,7 @@
 			<h1
 				class="flex items-center justify-center text-6xl font-black tracking-tight text-foreground sm:text-7xl"
 			>
-				<img class="w-60" src="/korok_hunt_logo.png" alt="logo" />
+				<img class="w-60 drop-shadow-lg" src="/korok_hunt_logo.png" alt="logo" />
 			</h1>
 
 			<p class="mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
@@ -101,7 +101,7 @@
 				<div
 					class="rounded-full border-2 border-primary bg-primary px-5 py-2.5 font-black text-primary-foreground shadow-sm"
 				>
-					<img class="inline" src="seed.png"/> Find Koroks
+					<img class="inline" src="seed.png" alt="Korok seed"/> Find Koroks
 				</div>
                 </a>
 
@@ -209,11 +209,6 @@
 						class="h-full max-h-125 w-full rounded-2xl object-contain shadow-md"
 						bind:this={canvas}
 					></canvas>
-					<!-- <img
-						class="h-full max-h-125 w-full rounded-2xl object-contain shadow-md"
-						src="sticker_example.png"
-						alt="Example of a Korok Hunt sticker"
-					/> -->
 				</div>
 			</div>
 		</Card.Root>
@@ -278,4 +273,14 @@
 			</Card.Content>
 		</Card.Root>
 	</section>
+
+    <!-- Disclaimer -->
+    <section>
+        <br>
+        <p style="font-size: 14pt; text-align: center" class="mt-1">
+            Made by RPI students, for RPI students.<br>
+            Not endorsed or sponsored by Rensselaer Polytechnic Institute.<br>
+            The code for this website can be found <a style="text-decoration: underline;" class="text-primary" href="https://github.com/battistary/korok">here</a>.
+        </p> 
+    </section>
 </div>

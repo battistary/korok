@@ -1,7 +1,9 @@
 import type { PageServerLoad } from './$types';
-import { getMyFinds } from './query/korok.remote'; // adjust path if needed
+import { getMyFinds } from './query/korok.remote';
 
 export const load: PageServerLoad = async (event) => {
+    event.depends('app:korok-count'); // <-- add this
+
     const user = event.locals.user;
     let koroksFound = 0;
 
@@ -11,13 +13,12 @@ export const load: PageServerLoad = async (event) => {
             koroksFound = result?.koroksFound ?? 0;
         } catch (error) {
             console.error('Failed to fetch koroks in layout:', error);
-            // fallback to 0
         }
     }
 
     return {
         user,
-        koroksFound, // now available as data.koroksFound
-        test: ''     // keep existing fields if you need them
+        koroksFound,
+        test: ''
     };
 };

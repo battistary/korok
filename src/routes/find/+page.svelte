@@ -7,6 +7,7 @@
 	import { tripleNumber } from '$lib/utils';
 	import Spinner from '#lib/components/ui/spinner/spinner.svelte';
 	import { browser } from '$app/env';
+    import { goto, invalidate } from '$app/navigation';
 
 	let { data }: { data: PageData } = $props();
 	let failed = $state(false);
@@ -41,6 +42,7 @@
 			failed = true;
 		}
 		loaded = true;
+        await invalidate('app:korok-count');
 	});
 </script>
 
@@ -56,9 +58,9 @@
 			<Card.Header class="border-b-2 border-border bg-secondary/60 px-6 py-5">
 				<div class="flex items-center justify-between">
 					<div>
-						<Card.Title class="font-[hylia] text-2xl">
+						<Card.Title class="font-black text-2xl">
 							{#if !data.user}
-								You need to be logged in to find a Korok.
+                                {goto("/login")}
 							{:else if failed}
 								Failed to find Korok.
 							{:else if found}
@@ -75,7 +77,7 @@
 								This Korok does not exist check if it belongs to this year and try again
 							{:else}
 								<strong>You have found {yourFinds} Korok{yourFinds !== 1 ? 's' : ''}!</strong><br />
-								{korokFinds} other player {korokFinds === 1 ? 'has' : 's have'} found this Korok.
+								{korokFinds - 1} other player{(korokFinds - 1) === 1 ? ' has' : 's have'} found this Korok.
 							{/if}
 						</Card.Description>
 					</div>
@@ -98,7 +100,7 @@
 						<div>
 							<img
 								class="h-80"
-								src={`/koroks/k_${korok?.number}.png`}
+								src={`/koroks/k_${korok?.type}.png`}
 								alt={korok?.number.toString()}
 							/>
 						</div>

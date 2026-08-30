@@ -25,11 +25,11 @@
 {/snippet}
 
 <ModeWatcher defaultMode="light" />
-<svelte:head><link rel="icon" href="/korok_hunt_logo.png" /> <title>Korok Hunt</title></svelte:head>
+<svelte:head><link rel="icon" href="/korok_hunt_logo.png" /> <title>RPI Korok Hunt</title></svelte:head>
 <header class="flex flex-wrap items-center border-b px-6 py-2 font-[hylia] lg:px-16 lg:py-0">
 	<div class="flex flex-1 items-center justify-between">
 		<a href="/">
-			<img style="min-width:48px;" class="h-12 w-12" alt="logo" src="korok_hunt_logo.png" />
+			<img style="min-width:48px;" class="h-12 w-12 drop-shadow-lg" alt="logo" src="korok_hunt_logo.png" />
 		</a>
 	</div>
 

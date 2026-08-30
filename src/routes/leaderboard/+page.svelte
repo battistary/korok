@@ -73,7 +73,7 @@
 						type="single"
 						bind:value={() => leaderboard.toString(), (e) => (leaderboard = Number(e))}
 					>
-						<Select.Trigger class="w-28 border-2 bg-background font-black">
+						<Select.Trigger class="w-28 border-2 bg-background font-black truncate">
 							{#if leaderboard === -1}
 								Global
 							{:else}
@@ -81,9 +81,9 @@
 							{/if}
 						</Select.Trigger>
 
-						<Select.Content>
+						<Select.Content class="overflow-hidden truncate">
 							{#each myLeaderboards as leaderboard, index (index)}
-								<Select.Item value={leaderboard.id}>
+								<Select.Item value={leaderboard.id} class="truncate overflow-hidden">
 									{leaderboard.name}
 								</Select.Item>
 							{/each}
