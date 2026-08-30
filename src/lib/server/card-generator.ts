@@ -1,32 +1,37 @@
-import { createCanvas, loadImage, registerFont } from 'canvas';
+import { createCanvas, loadImage, GlobalFonts } from '@napi-rs/canvas';
 import QRCode from 'qrcode';
+import { fileURLToPath } from 'url';
 import path from 'path';
 import { tripleNumber } from '$lib/utils';
 
-// Register the hylia font (same as client)
-registerFont(path.resolve('./static/HyliaSerifBeta-Regular.ttf'), {
-    family: 'hylia'
-});
+// Compute absolute path to the static folder
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const staticPath = path.resolve(__dirname, '../../../static');
+
+// Register the custom font using absolute path
+GlobalFonts.registerFromPath(
+    path.join(staticPath, 'HyliaSerifBeta-Regular.ttf'),
+    'hylia'
+);
 
 export async function generateKorokCardBuffer(
     id: string,
     type: number,
     number: number
 ): Promise<Buffer> {
-    // Load all images from static folder
-    const base = await loadImage(path.resolve('./static/korok_sticker_base.png'));
-    const overlay = await loadImage(path.resolve(`./static/koroks/k_${type}.png`));
-    const logo = await loadImage(path.resolve('./static/korok_hunt_logo.png'));
+    // Load images using absolute paths
+    const base = await loadImage(path.join(staticPath, 'korok_sticker_base.png'));
+    const overlay = await loadImage(path.join(staticPath, `koroks/k_${type}.png`));
+    const logo = await loadImage(path.join(staticPath, 'korok_hunt_logo.png'));
 
     const canvas = createCanvas(base.width, base.height);
     const ctx = canvas.getContext('2d');
 
-    // Draw base
     ctx.drawImage(base, 0, 0);
 
-    // Generate QR code as canvas
     const qrCanvas = createCanvas(482, 482);
-    await QRCode.toCanvas(qrCanvas, `${process.env.ORIGIN || 'http://localhost:5173'}/find?id=${id}`, {
+    const origin = process.env.ORIGIN || 'http://localhost:5173';
+    await QRCode.toCanvas(qrCanvas, `${origin}/find?id=${id}`, {
         width: 482,
         version: 7,
         margin: 0,
@@ -34,14 +39,12 @@ export async function generateKorokCardBuffer(
     });
     ctx.drawImage(qrCanvas, 67, 67);
 
-    // White rectangle behind logo
     ctx.fillStyle = '#d3973e';
     ctx.beginPath();
     ctx.rect(239, 239, 150, 150);
     ctx.fill();
     ctx.drawImage(logo, 239, 239, 150, 150);
 
-    // Overlay (Korok icon) – centered at x=799, y=293 with scaling
     const multiplier = Math.min(420 / overlay.width, 500 / overlay.height);
     const ow = overlay.width * multiplier;
     const oh = overlay.height * multiplier;
@@ -49,7 +52,6 @@ export async function generateKorokCardBuffer(
     const oy = 293 - oh / 2;
     ctx.drawImage(overlay, ox, oy, ow, oh);
 
-    // Number text
     ctx.font = '60px hylia';
     ctx.fillStyle = '#995a05';
     ctx.textAlign = 'center';
