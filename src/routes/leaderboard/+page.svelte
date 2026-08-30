@@ -36,7 +36,7 @@
 	let sortDir = $state('desc');
 	let filterValue = $state('');
 	let sortedPlayers = $derived(
-		[...(await players)]
+		[...(players.current ?? [])]
 			.sort((a, b) => {
 				let el1 = sortDir === 'asc' ? a : b;
 				let el2 = sortDir === 'asc' ? b : a;
@@ -49,6 +49,8 @@
 	let newLeaderboardDescription = $state('');
 	let joinLeaderboard = $state(false);
 	let createLeaderboard = $state(false);
+
+    let name = $derived(myLeaderboards.find((l) => l.id === leaderboard)?.name);
 </script>
 
 <div class="mx-auto max-w-4xl px-4 py-8">
@@ -68,7 +70,6 @@
 					<span class="text-sm font-bold tracking-wider text-muted-foreground uppercase">
 						Leaderboard:
 					</span>
-
 					<Select.Root
 						type="single"
 						bind:value={() => leaderboard.toString(), (e) => (leaderboard = Number(e))}
@@ -77,13 +78,13 @@
 							{#if leaderboard === -1}
 								Global
 							{:else}
-								{myLeaderboards.find((l) => l.id === leaderboard)?.name}
+                                {name.length > 11 ? name.substring(0, 8) + "..." : name}
 							{/if}
 						</Select.Trigger>
 
 						<Select.Content class="overflow-hidden truncate">
 							{#each myLeaderboards as leaderboard, index (index)}
-								<Select.Item value={leaderboard.id} class="truncate overflow-hidden">
+								<Select.Item value={leaderboard.id.toString()} class="truncate overflow-hidden">
 									{leaderboard.name}
 								</Select.Item>
 							{/each}

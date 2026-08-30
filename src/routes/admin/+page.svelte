@@ -23,7 +23,8 @@
 		toggleMuncher,
 		unreleaseKoroks,
 		updateFindableAdmin,
-		updateKoroksAdmin
+		updateKoroksAdmin,
+        resetUserKoroks
 	} from '../query/korok.remote';
 	import { Toggle } from '$lib/components/ui/toggle/index.js';
 
@@ -50,7 +51,7 @@
 	let sortDir = $state('desc');
 	let filterValue = $state('');
 	let sortedPlayers = $derived(
-		[...(await playersPromise)]
+		[...(playersPromise.current ?? [])]
 			.sort((a, b) => {
 				let el1 = sortDir === 'asc' ? a : b;
 				let el2 = sortDir === 'asc' ? b : a;
@@ -605,6 +606,13 @@
 										await deleteUser({ userid: player.user.id });
 										playersPromise.refresh();
 									}}>Delete User</ContextMenu.Item
+								>
+                                <ContextMenu.Item
+									onclick={async () => {
+										await resetUserKoroks({ userid: player.user.id });
+                                        await invalidate('app:korok-count');
+										playersPromise.refresh();
+									}}>Reset Korok finds</ContextMenu.Item
 								>
 							</ContextMenu.Content>
 						</ContextMenu.Root>

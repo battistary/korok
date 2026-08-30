@@ -469,6 +469,13 @@ export const deleteUser = command(v.object({ userid: v.string() }), async ({ use
 	return true;
 });
 
+export const resetUserKoroks = command(v.object({ userid: v.string() }), async ({ userid }) => {
+	const cu = await getCurrentUser();
+	if (!cu || cu.role !== 'admin') return false;
+	await db.delete(finds).where(eq(finds.userId, userid));
+	return true;
+});
+
 export const markKorokRemoved = command(v.object({ korokId: v.string() }), async ({ korokId }) => {
 	await db.update(korok).set({ isRemoved: true }).where(eq(korok.id, korokId));
 	return true;

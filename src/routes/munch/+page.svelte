@@ -34,8 +34,8 @@
 							''
 						);
 					}}
-					markers={await markers}
-					areas={await areas}
+					markers={markers.current ?? []}
+					areas={areas.current ?? []}
 				/>
 			</div>
 		</Card.Root>

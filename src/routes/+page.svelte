@@ -173,7 +173,7 @@
 
 		<Card.Root class="overflow-hidden border-2 border-border bg-card p-2 shadow-xl sm:p-3">
 			<div class="overflow-hidden rounded-2xl">
-				<Map markers={await markers} areas={await areas} />
+				<Map markers={markers.current ?? []} areas={areas.current ?? []} />
 			</div>
 		</Card.Root>
 	</section>

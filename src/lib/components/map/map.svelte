@@ -431,7 +431,6 @@
 		map.addControl(new maplibregl.NavigationControl(), 'top-right');
 
 		const loadMap = () => {
-			console.log('Map load handler running'); // <-- check this on Vercel
 			// ========================================================
 			// KOROKS
 			// ========================================================
@@ -578,14 +577,12 @@
 
 			map.on('touchend', 'korok-markers', (e) => {
 				if (longPressTriggered) {
-					console.log(e);
 					onKorokContextMenu(e);
 				}
 				clearTimeout(longPressTimer);
 			});
 
 			mounted = true;
-			console.log('Map load handler finished');
 		};
 
 		// Attach to load event
