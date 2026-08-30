@@ -33,7 +33,7 @@
 
 	<!-- Leaderboard -->
 	<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
-		<Card.Header class="border-b-2 border-border bg-secondary/60 px-6 py-5">
+		<Card.Header class="-m-[1px] border-b-2 border-border bg-secondary/60 px-6 py-5">
 			<div class="flex items-center justify-between">
 				<div>
                     <img class="inline" src="seed.png"/><Card.Title class="inline text-2xl font-black px-2">Korok Rankings</Card.Title>

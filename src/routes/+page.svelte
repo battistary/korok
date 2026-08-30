@@ -99,7 +99,7 @@
 			<div class="mt-8 flex flex-wrap justify-center gap-3">
                 <a href="leaderboard">
 				<div
-					class="rounded-full border-2 border-primary bg-primary px-5 py-2.5 font-black text-primary-foreground shadow-sm"
+					class="rounded-full border-2 border-border bg-primary px-5 py-2.5 font-black text-primary-foreground shadow-sm"
 				>
 					<img class="inline" src="seed.png" alt="Korok seed"/> Find Koroks
 				</div>
@@ -119,7 +119,7 @@
 	<!-- What is this -->
 	<section class="mb-8">
 		<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
-			<Card.Header class="bg-secondary/60 px-6 py-5">
+			<Card.Header class="-m-[1px] bg-secondary/60 px-6 py-5">
 				<Card.Title class="text-3xl font-black">What Is This?</Card.Title>
 			</Card.Header>
 

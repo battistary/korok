@@ -32,6 +32,8 @@
 	import { cn, tripleNumber } from '$lib/utils';
 	import { zeldaStyle } from './zelda-style';
 	import { browser } from '$app/env';
+  	import { Leaf, LandPlot, ArrowLeftRight } from 'lucide-svelte';
+
 
 	let element: HTMLElement;
 	let currentDescription: string = $state('');
@@ -672,9 +674,9 @@
 	{/if}
 
 	{#if actions.newAreas || actions.newKoroks}
-		<Card.Root class="flex flex-row items-center rounded-none p-2">
-			<Badge variant="default" class="h-8 w-30">
-				Mode: {clickMode || 'No Action'}
+		<Card.Root class="flex ring-0 flex-row items-center rounded-none p-3 pb-1 shadow-none">
+			<Badge variant="default" class="h-8 w-33">
+				<ArrowLeftRight /> Mode: {clickMode || 'No Action'}
 			</Badge>
 			{#if actions.newAreas}
 				<Button
@@ -690,7 +692,7 @@
 						polyContext.open = false;
 					}}
 				>
-					New Area
+					<LandPlot /> New Area
 				</Button>
 			{/if}
 			{#if actions.newKoroks}
@@ -700,7 +702,7 @@
 						polyContext.open = false;
 					}}
 				>
-					New Korok
+					<Leaf /> New Korok
 				</Button>
 			{/if}
 		</Card.Root>

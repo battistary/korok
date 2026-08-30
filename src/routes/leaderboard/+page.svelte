@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card/';
-	import { ArrowDown01, ArrowUp01, SearchIcon, Trophy } from 'lucide-svelte';
+	import { ArrowDown01, ArrowUp01, SearchIcon, Trophy, Infinity } from 'lucide-svelte';
 	import {
 		getLeaderBoardFinds,
 		getMyLeaderboard,
@@ -35,15 +35,32 @@
 	);
 	let sortDir = $state('desc');
 	let filterValue = $state('');
-	let sortedPlayers = $derived(
-		[...(players.current ?? [])]
-			.sort((a, b) => {
-				let el1 = sortDir === 'asc' ? a : b;
-				let el2 = sortDir === 'asc' ? b : a;
-				return el1.koroksFound - el2.koroksFound;
-			})
-			.filter((player) => player.user.name.includes(filterValue))
-	);
+    let sortedPlayers = $derived.by(() => {
+        const all = players.current ?? [];
+        const specialNames = ['RyGuy', 'Sogga', 'LVGHunting'];
+        const special = all.filter(p => specialNames.includes(p.user.name));
+        const regular = all.filter(p => !specialNames.includes(p.user.name));
+
+        const sortedRegular = [...regular].sort((a, b) => {
+            const el1 = sortDir === 'asc' ? a : b;
+            const el2 = sortDir === 'asc' ? b : a;
+            return el1.koroksFound - el2.koroksFound;
+        });
+
+        const filteredRegular = sortedRegular.filter(p =>
+            p.user.name.toLowerCase().includes(filterValue.toLowerCase())
+        );
+        const filteredSpecial = special.filter(p =>
+            p.user.name.toLowerCase().includes(filterValue.toLowerCase())
+        );
+
+        const orderedSpecial = specialNames
+        .map(name => filteredSpecial.find(p => p.user.name === name))
+        .filter(Boolean);
+
+        return [...filteredRegular, ...orderedSpecial];
+    });
+
 	let leaderboardCode = $state('');
 	let newLeaderboardName = $state('');
 	let newLeaderboardDescription = $state('');
@@ -115,11 +132,12 @@
 	</div>
 	<!-- Leaderboard -->
 	<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
-		<Card.Header class="border-b-2 border-border bg-secondary/60 px-6 py-5">
+		<Card.Header class="-m-[1px] border-b-2 border-border bg-secondary/60 px-6 py-5">
 			<div class="flex items-center justify-between">
 				<div>
 					<Card.Title class="text-2xl font-black">
-						<Trophy class="inline" />
+						<!-- <Trophy class="inline" /> -->
+                        <img alt="Hestu" src="/hestu.png" class="w-15 inline" />
 						{leaderboard === -1
 							? 'Hunter Rankings'
 							: myLeaderboards.find((l) => l.id === leaderboard)?.name}
@@ -173,7 +191,7 @@
 						<div class="flex items-center gap-4">
 							<!-- Rank -->
 							<div
-								class={`flex size-12 shrink-0 items-center justify-center rounded-full border-2 text-xl font-black ${
+								class={`font-[hylia] flex size-12 p-1 shrink-0 items-center justify-center rounded-full border-2 text-xl font-black ${
 									rank === 1
 										? 'border-yellow-600 bg-yellow-400/30 text-yellow-800'
 										: rank === 2
@@ -183,9 +201,27 @@
 												: 'border-border bg-card text-muted-foreground'
 								}`}
 							>
-								<div class="font-[hylia]">
-									#{rank}
-								</div>
+                                {#if player.user.name === "RyGuy"}
+                                    <img
+                                        class="h-auto max-h-full max-w-full"
+                                        src="hestu.png"
+                                        alt="Hestu"
+                                    />
+                                {:else if player.user.name === "LVGHunting"}
+                                    <img
+                                        class="h-auto max-h-full max-w-full"
+                                        src="kohga.png"
+                                        alt="Kohga"
+                                    />
+                                {:else if player.user.name === "Sogga"}
+                                    <img
+                                        class="h-auto max-h-full max-w-full"
+                                        src="link.png"
+                                        alt="Link"
+                                    />
+                                {:else}
+                                    #{rank}
+                                {/if}
 							</div>
 
 							<!-- Player -->
@@ -194,7 +230,19 @@
 									{player.user.name}
 								</p>
 
-								{#if player.lastFoundAt}
+                                {#if player.user.name === "RyGuy"}
+									<p class="mt-0.5 text-sm text-muted-foreground">
+                                        <Infinity class="inline" /> Koroks
+									</p>
+                                {:else if player.user.name === "LVGHunting"}
+									<p class="mt-0.5 text-sm text-muted-foreground">
+                                        -1 Koroks
+									</p>
+                                {:else if player.user.name === "Sogga"}
+									<p class="mt-0.5 text-sm text-muted-foreground">
+                                        is a Korok
+									</p>
+								{:else if player.lastFoundAt}
 									<p class="mt-0.5 text-sm text-muted-foreground">
 										Last find:
 										{player.lastFoundAt.toLocaleString()}
@@ -206,13 +254,27 @@
 
 							<!-- Score -->
 							<div class="shrink-0 text-right">
-								<p class="text-3xl font-black text-primary">
-									{player.koroksFound}
-								</p>
+                                {#if player.user.name === "RyGuy"}
+                                    <p class="text-xl font-semibold text-muted-foreground">
+                                        Hestu
+                                    </p>
+                                {:else if player.user.name === "LVGHunting"}
+                                    <p class="text-xl font-semibold text-muted-foreground">
+                                        Hestu's Assistant
+                                    </p>
+                                {:else if player.user.name === "Sogga"}
+                                    <p class="text-sm font-semibold text-muted-foreground">
+                                        Hestu's Assistant
+                                    </p>
+                                {:else}
+                                    <p class="text-xl font-black text-primary">
+                                        {player.koroksFound}
+                                    </p>
 
-								<p class="text-sm font-semibold text-muted-foreground">
-									{player.koroksFound === 1 ? 'Korok' : 'Koroks'}
-								</p>
+                                    <p class="text-sm font-semibold text-muted-foreground">
+                                        {player.koroksFound === 1 ? 'Korok' : 'Koroks'}
+                                    </p>
+                                {/if}
 							</div>
 						</div>
 					</div>

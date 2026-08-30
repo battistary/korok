@@ -3,6 +3,7 @@
 	import * as Dialog from '$lib/components/ui/dialog/';
 	import Label from '#lib/components/ui/label/label.svelte';
 	import Input from '#lib/components/ui/input/input.svelte';
+	import Spinner from '#lib/components/ui/spinner/spinner.svelte';
 	import Button, { buttonVariants } from '#lib/components/ui/button/button.svelte';
 	import {
 		addAreaAdmin,
@@ -35,7 +36,7 @@
 	import * as InputGroup from '$lib/components/ui/input-group/';
 	import * as ContextMenu from '$lib/components/ui/context-menu/index.js';
 
-	import { ArrowDown01, ArrowUp01, Hamburger, SearchIcon, UserLock } from 'lucide-svelte';
+	import { ArrowDown01, ArrowUp01, Hamburger, SearchIcon, UserLock, Leaf, Download } from 'lucide-svelte';
 
 	let adminDataPromise = getAdminData();
 	let adminData = $derived(adminDataPromise.current ?? []);
@@ -99,6 +100,8 @@
 		type: 0,
 		isRelease: false
 	});
+
+    let adding = $state(false);
 </script>
 
 <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -147,7 +150,7 @@
 	<!-- Release controls -->
 	<section class="mb-8">
 		<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
-			<Card.Header class="border-b-2 border-border bg-secondary/50 px-6 py-5">
+			<Card.Header class="-m-[1px] border-b-2 border-border bg-secondary/60 px-6 py-5">
 				<Card.Title class="text-2xl font-black">Release Management</Card.Title>
 
 				<Card.Description>
@@ -185,7 +188,7 @@
 							}
 						}}
 					>
-						UnRelease All
+						Unrelease All
 					</Button>
 				</div>
 
@@ -222,7 +225,7 @@
 							}
 						}}
 					>
-						Make findable
+						Make Findable
 					</Button>
 				</div>
 
@@ -308,7 +311,7 @@
 	<!-- Korok list -->
 	<section>
 		<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
-			<Card.Header class="border-b-2 border-border bg-secondary/50 px-6 py-5">
+			<Card.Header class="-m-[1px] border-b-2 border-border bg-secondary/60 px-6 py-5">
 				<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 					<div>
 						<Card.Title class="text-2xl font-black">
@@ -324,23 +327,33 @@
 						</Card.Description>
 					</div>
 
-					<Button
-						onclick={() => {
-							openKorok = true;
+                    <div class="ml-auto">
+                        <Button variant="secondary"
+                            onclick={() => {
+                                window.location.href = '/api/export-all-koroks';
+                            }}
+                        >
+                            <Download /> Export All
+                        </Button>
 
-							newKorok = {
-								description: '',
-								lat: 42.0,
-								lng: -73.0,
-								number: nextNumber,
-								release: currentRelease === -1 ? 0 : currentRelease,
-								type: nextType,
-								isRelease: false
-							};
-						}}
-					>
-						+ Create Korok
-					</Button>
+                        <Button disabled={adding}
+                            onclick={() => {
+                                openKorok = true;
+
+                                newKorok = {
+                                    description: '',
+                                    lat: 42.0,
+                                    lng: -73.0,
+                                    number: nextNumber,
+                                    release: currentRelease === -1 ? 0 : currentRelease,
+                                    type: nextType,
+                                    isRelease: false
+                                };
+                            }}
+                        >
+                            <Leaf /> Create Korok
+                        </Button>
+                    </div>
 				</div>
 			</Card.Header>
 
@@ -348,7 +361,7 @@
 				<div class="flex max-h-150 flex-col gap-3 overflow-auto">
 					{#each markersFiltered as korok (korok.id)}
 						<div
-							class="rounded-xl border-2 border-border/70 bg-secondary/40 p-4 transition-all hover:border-primary hover:shadow-md"
+							class="rounded-xl border-2 border-border/70 bg-secondary/60 p-4 transition-all hover:border-primary hover:shadow-md"
 						>
 							<div class="flex flex-col gap-4 lg:flex-row lg:items-center">
 								<!-- Number and description -->
@@ -364,9 +377,13 @@
 									</div>
 
 									<div class="min-w-0">
-										<p class="font-[hylia] text-xl text-foreground">
-											Korok #{tripleNumber(korok.number)}
+										<p class="text-lg font-[hylia] tracking-wider text-muted-foreground uppercase inline">
+											Korok 
 										</p>
+
+										<p class="font-[hylia] text-xl text-foreground inline">
+                                            #{tripleNumber(korok.number)}
+                                        </p>
 
 										{#if korok.description}
 											<p class="truncate text-sm text-muted-foreground">
@@ -465,7 +482,7 @@
 	<!-- User controls -->
 	<section class="mb-8">
 		<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
-			<Card.Header class="border-b-2 border-border bg-secondary/50 px-6 py-5">
+			<Card.Header class="-m-[1px] border-b-2 border-border bg-secondary/60 px-6 py-5">
 				<Card.Title class="text-2xl font-black">User Management</Card.Title>
 
 				<Card.Description>Manage Users</Card.Description>
@@ -499,7 +516,7 @@
 
 	<section>
 		<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
-			<Card.Header class="border-b-2 border-border bg-secondary/50 px-6 py-5">
+			<Card.Header class="-m-[1px] border-b-2 border-border bg-secondary/60 px-6 py-5">
 				<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 					<div>
 						<Card.Title class="text-2xl font-black">Players</Card.Title>
@@ -623,7 +640,7 @@
 	</section>
 </div>
 <!-- Create / Edit Dialog -->
-<Dialog.Root bind:open={openKorok}>
+<Dialog.Root bind:open={openKorok} >
 	<Dialog.Content class="max-h-[90vh] overflow-y-auto sm:max-w-lg">
 		<Dialog.Header>
 			<Dialog.Title class="text-2xl font-black">
@@ -742,21 +759,25 @@
 					Save Changes
 				</Dialog.Close>
 			{:else}
-				<Dialog.Close
+				<Button
 					onclick={async () => {
+                        adding = true;
 						await addKoroksAdmin({
 							...newKorok,
 							release: newKorok.release === -1 ? 0 : newKorok.release
 						});
 						nextNumber++;
+                        nextType = (nextType + 1) % 13;
 						await markers.refresh();
 						await adminDataPromise.refresh();
 						changeId = '';
+                        adding = false;
+                        openKorok = false;
 					}}
 					class={buttonVariants({ variant: 'default' })}
 				>
-					Create Korok
-				</Dialog.Close>
+                    {#if adding}<Spinner />{/if} Create Korok
+				</Button>
 			{/if}
 		</Dialog.Footer>
 	</Dialog.Content>
