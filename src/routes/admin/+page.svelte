@@ -50,15 +50,34 @@
 	let playersPromise = getUserFinds();
 	let sortDir = $state('desc');
 	let filterValue = $state('');
-	let sortedPlayers = $derived(
-		[...(playersPromise.current ?? [])]
-			.sort((a, b) => {
-				let el1 = sortDir === 'asc' ? a : b;
-				let el2 = sortDir === 'asc' ? b : a;
-				return el1.koroksFound - el2.koroksFound;
-			})
-			.filter((player) => player.user.name.includes(filterValue))
-	);
+    let sortedPlayers = $derived.by(() => {
+        const all = playersPromise.current ?? [];
+        const specialNames = ['RyGuy', 'Sogga', 'LVGHunting']; // ← edit this list as needed
+        const special = all.filter(p => specialNames.includes(p.user.name));
+        const regular = all.filter(p => !specialNames.includes(p.user.name));
+
+        // Sort regular players by koroksFound (respecting sortDir)
+        const sortedRegular = [...regular].sort((a, b) => {
+            const el1 = sortDir === 'asc' ? a : b;
+            const el2 = sortDir === 'asc' ? b : a;
+            return el1.koroksFound - el2.koroksFound;
+        });
+
+        // Apply search filter (case‑insensitive)
+        const filteredRegular = sortedRegular.filter(p =>
+            p.user.name.toLowerCase().includes(filterValue.toLowerCase())
+        );
+        const filteredSpecial = special.filter(p =>
+            p.user.name.toLowerCase().includes(filterValue.toLowerCase())
+        );
+
+        // Keep special users in a fixed order (RyGuy, LVGHunting, Sogga)
+        const orderedSpecial = specialNames
+        .map(name => filteredSpecial.find(p => p.user.name === name))
+        .filter(Boolean); // remove undefined entries
+
+        return [...filteredRegular, ...orderedSpecial];
+    });
 
 	$effect(() => {
 		if (currentRelease === -1) {
