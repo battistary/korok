@@ -35,7 +35,7 @@
 			<!-- Auth Card -->
 			<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-xl">
 				<Tabs.Root value="login">
-					<Card.Header class="border-b-2 border-border bg-secondary/40 px-6 pt-6">
+					<Card.Header class="-m-[1px] border-b-2 border-border bg-secondary/40 px-6 pt-6">
 						<Tabs.List class="grid w-full grid-cols-2">
 							<Tabs.Trigger value="login" class="font-bold">Login</Tabs.Trigger>
 
@@ -145,7 +145,7 @@
 						</Tabs.Content>
 					</Card.Content>
 
-					<Card.Footer class="border-t-2 border-border bg-background/40 px-6 py-4">
+					<Card.Footer class="border-t-2 border-border bg-background/40 px-6 py-4 -mb-[26px]">
 						<p class="w-full text-center text-xs leading-5 text-muted-foreground">
 							By joining the hunt, you'll be able to track your discoveries and compete on the
 							leaderboard.
