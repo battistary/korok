@@ -28,14 +28,13 @@
         resetUserKoroks
 	} from '../query/korok.remote';
 	import { Toggle } from '$lib/components/ui/toggle/index.js';
-
 	import * as Card from '$lib/components/ui/card';
 	import Switch from '#lib/components/ui/switch/switch.svelte';
 	import { cn, generateQRCode, tripleNumber } from '$lib/utils';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import * as InputGroup from '$lib/components/ui/input-group/';
 	import * as ContextMenu from '$lib/components/ui/context-menu/index.js';
-
+    import { invalidate } from '$app/navigation';
 	import { ArrowDown01, ArrowUp01, Hamburger, SearchIcon, UserLock, Leaf, Download } from 'lucide-svelte';
 
 	let adminDataPromise = getAdminData();
@@ -627,8 +626,8 @@
                                 <ContextMenu.Item
 									onclick={async () => {
 										await resetUserKoroks({ userid: player.user.id });
-                                        await invalidate('app:korok-count');
 										playersPromise.refresh();
+                                        await invalidate('app:korok-count');
 									}}>Reset Korok finds</ContextMenu.Item
 								>
 							</ContextMenu.Content>
