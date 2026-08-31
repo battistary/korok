@@ -65,7 +65,7 @@
 					<div>
 						<Card.Title class="font-black text-2xl">
 							{#if !data.user}
-                                Please login to find this Korok.
+                                Login to find me!
 							{:else if failed}
 								Failed to find Korok.
 							{:else if found}
@@ -77,9 +77,9 @@
 
 						<Card.Description class="mt-1">
 							{#if !data.user}
-								Go to the login page in order to find Korok then scan again.
+								Please create an account or login to find this Korok.
 							{:else if failed}
-								This Korok does not exist check if it belongs to this year and try again
+								This Korok is not valid. Please check if it belongs to this hunt and try again.
 							{:else}
 								<strong>You have found {yourFinds} Korok{yourFinds !== 1 ? 's' : ''}!</strong><br />
 								{korokFinds - 1} other player{(korokFinds - 1) === 1 ? ' has' : 's have'} found this Korok.
