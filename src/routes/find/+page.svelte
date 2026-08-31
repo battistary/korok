@@ -83,7 +83,7 @@
 					</div>
 
 					<div class="rounded-full border-2 border-border bg-background px-4 py-2 font-[hylia]">
-						#{korok?.number ? tripleNumber(korok?.number) : '???'}
+                        #{korok?.number != null ? tripleNumber(korok.number) : '???'}
 					</div>
 				</div>
 			</Card.Header>
