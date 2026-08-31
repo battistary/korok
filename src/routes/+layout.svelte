@@ -25,7 +25,18 @@
 {/snippet}
 
 <ModeWatcher defaultMode="light" />
-<svelte:head><link rel="icon" href="/korok_hunt_logo.png" /> <title>RPI Korok Hunt</title></svelte:head>
+<svelte:head>
+    <link rel="icon" href="/korok_hunt_logo.png" />
+    <title>RPI Korok Hunt</title>
+    <!-- Open Graph / Discord -->
+    <meta property="og:title" content="The RPI Korok Hunt" />
+    <meta property="og:description" content="Find Koroks hidden across campus in the RPI Korok Hunt!" />
+    <meta property="og:image" content="https://www.rpikorokhunt.com/korok_hunt_logo.png" />
+    <meta property="og:url" content="https://www.rpikorokhunt.com" />
+    <meta property="og:type" content="website" />
+    <!-- Optional: Twitter card -->
+    <meta name="twitter:card" content="summary_large_image" />
+</svelte:head>
 <header class="flex flex-wrap items-center border-b px-6 py-2 font-[hylia] lg:px-16 lg:py-0">
 	<div class="flex flex-1 items-center justify-between">
 		<a href="/">
