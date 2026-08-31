@@ -9,6 +9,10 @@
 	import { MoonIcon, SunIcon } from 'lucide-svelte';
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import type { LayoutProps } from './$types';
+    import { dev } from '$app/environment';
+    import { injectAnalytics } from '@vercel/analytics/sveltekit';
+
+    injectAnalytics({ mode: dev ? 'development' : 'production' });
 
 	let { children, data }: LayoutProps = $props();
 </script>
