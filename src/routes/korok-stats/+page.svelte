@@ -36,7 +36,7 @@
 		<Card.Header class="-m-[1px] border-b-2 border-border bg-secondary/60 px-6 py-5">
 			<div class="flex items-center justify-between">
 				<div>
-                    <img class="inline" src="seed.png"/><Card.Title class="inline text-2xl font-black px-2">Korok Rankings</Card.Title>
+                    <img class="inline" src="seed.png" alt="Korok seed"/><Card.Title class="inline text-2xl font-black px-2">Korok Rankings</Card.Title>
 					<Card.Description class="mt-1">Ranked by {sortMode === 'Number' ? 'Korok number' : 'number of finds'}</Card.Description>
 				</div>
 				<div class="flex flex-col items-end gap-2">
