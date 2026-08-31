@@ -27,7 +27,12 @@
 	} | null = $state(null);
 	onMount(async () => {
 		if (!browser) return;
-		if (!data.user || !data.id) {
+        if (!data.user) {
+            document.cookie = `loggedInKorok=${data.id ?? ''}`;
+            goto("/login");
+            return;
+        }
+		if (!data.id) {
 			document.cookie = `loggedInKorok=${data.id ?? ''}`;
 			loaded = true;
 			return;
@@ -60,7 +65,7 @@
 					<div>
 						<Card.Title class="font-black text-2xl">
 							{#if !data.user}
-                                {goto("/login")}
+                                Please login to find this Korok.
 							{:else if failed}
 								Failed to find Korok.
 							{:else if found}
