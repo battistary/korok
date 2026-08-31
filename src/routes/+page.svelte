@@ -97,7 +97,7 @@
 			</p>
 
 			<div class="mt-8 flex flex-wrap justify-center gap-3">
-                <a href="leaderboard">
+                <a href="korok-stats">
 				<div
 					class="rounded-full border-2 border-border bg-primary px-5 py-2.5 font-black text-primary-foreground shadow-sm"
 				>
@@ -105,7 +105,7 @@
 				</div>
                 </a>
 
-                <a href="korok-stats">
+                <a href="leaderboard">
 				<div
 					class="rounded-full border-2 border-border bg-secondary px-5 py-2.5 font-black text-secondary-foreground shadow-sm"
 				>
