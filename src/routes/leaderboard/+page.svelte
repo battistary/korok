@@ -263,7 +263,7 @@
                                         Hestu's Assistant
                                     </p>
                                 {:else if player.user.name === "Sogga"}
-                                    <p class="text-sm font-semibold text-muted-foreground">
+                                    <p class="text-xl font-semibold text-muted-foreground">
                                         Hestu's Assistant
                                     </p>
                                 {:else}
