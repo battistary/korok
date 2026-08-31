@@ -285,7 +285,7 @@
     <!-- Disclaimer -->
     <section>
         <br>
-        <p style="font-size: 14pt; text-align: center" class="mt-1">
+        <p style="text-align: center" class="mt-1">
             Made by RPI students, for RPI students.<br>
             Not endorsed or sponsored by Rensselaer Polytechnic Institute.<br>
             The code for this website can be found <a style="text-decoration: underline;" class="text-primary" href="https://github.com/battistary/korok">here</a>.
