@@ -626,27 +626,35 @@
 							<ContextMenu.Content>
 								<ContextMenu.Item
 									onclick={async () => {
-										await toggleAdmin({ userid: player.user.id });
-										playersPromise.refresh();
+                                        if (confirm("You sure bro?")) {
+                                            await toggleAdmin({ userid: player.user.id });
+                                            playersPromise.refresh();
+                                        }
 									}}>Toggle Admin</ContextMenu.Item
 								>
 								<ContextMenu.Item
 									onclick={async () => {
-										await toggleMuncher({ userid: player.user.id });
-										playersPromise.refresh();
+                                        if (confirm("You sure bro?")) {
+										    await toggleMuncher({ userid: player.user.id });
+										    playersPromise.refresh();
+                                        }
 									}}>Toggle Muncher</ContextMenu.Item
 								>
 								<ContextMenu.Item
 									onclick={async () => {
-										await deleteUser({ userid: player.user.id });
-										playersPromise.refresh();
+                                        if (confirm("Are you sure you want to delete this user?")) {
+                                            await deleteUser({ userid: player.user.id });
+                                            playersPromise.refresh();
+                                        }
 									}}>Delete User</ContextMenu.Item
 								>
                                 <ContextMenu.Item
 									onclick={async () => {
-										await resetUserKoroks({ userid: player.user.id });
-										playersPromise.refresh();
-                                        await invalidate('app:korok-count');
+                                        if (confirm("Are you sure you want to reset this user's Korok finds?")) {
+                                            await resetUserKoroks({ userid: player.user.id });
+                                            playersPromise.refresh();
+                                            await invalidate('app:korok-count');
+                                        }
 									}}>Reset Korok finds</ContextMenu.Item
 								>
 							</ContextMenu.Content>

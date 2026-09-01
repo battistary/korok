@@ -158,7 +158,7 @@
 
 				<div class="flex flex-col items-end gap-2">
 					<div class="grow rounded-full border-2 border-border bg-background px-4 py-2 font-bold">
-						{sortedPlayers.length - 3} Hunter{sortedPlayers.length !== 1 ? 's' : ''}
+						{Math.max(0, sortedPlayers.length - 3)} Hunter{Math.max(0, sortedPlayers.length - 3) !== 1 ? 's' : ''}
 					</div>
 					<div class="flex w-30 flex-wrap justify-end gap-2 lg:w-50">
 						<InputGroup.Root class="bg-background ">
