@@ -14,8 +14,7 @@
 			<h2 class="mt-1 text-3xl font-black text-foreground sm:text-4xl">Clean up the Koroks</h2>
 
 			<p class="mt-1 text-muted-foreground">
-				Right click on a Korok to open context menu. This will allow you to delete it or see its
-				description.
+				Right click on a Korok to open its context menu. This will allow you to delete it or view its description.
 			</p>
 		</div>
 
