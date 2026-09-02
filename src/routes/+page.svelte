@@ -3,24 +3,10 @@
 	import * as Card from '$lib/components/ui/card/';
 	import { onMount } from 'svelte';
 	import { getAreas, getKoroks } from './query/korok.remote';
-	import { generateQRCode } from '$lib/utils';
 	import { Lightbulb, TriangleAlert, Trophy } from 'lucide-svelte';
 
 	let areas = getAreas();
 	let markers = getKoroks();
-
-	let canvas: HTMLCanvasElement;
-
-	onMount(() => {
-		if (canvas) {
-			generateQRCode({
-				id: '000',
-				number: 0,
-				type: 0,
-				canvasP: canvas
-			});
-		}
-	});
 
 	const faq = [
 		{
@@ -205,10 +191,7 @@
 				</Card.Content>
 
 				<div class="m-1 rounded-xl bg-secondary/30 p-4 sm:p-6">
-					<canvas
-						class="h-full max-h-125 w-full rounded-2xl object-contain shadow-md"
-						bind:this={canvas}
-					></canvas>
+                    <img src="/sticker_example.png" alt="Example of a Korok sticker" class="h-full max-h-125 w-full rounded-2xl object-contain shadow-md" />
 				</div>
 			</div>
 		</Card.Root>

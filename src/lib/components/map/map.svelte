@@ -444,10 +444,6 @@
 				});
 			}
 
-			/*
-			 * You'll need korok.png/svg added to the map later.
-			 * For now, use circles so we don't depend on an image.
-			 */
 			map.loadImage('/seed.png').then((img) => {
 				if (!map.hasImage('korok')) {
 					map.addImage('korok', img.data);
