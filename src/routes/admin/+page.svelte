@@ -25,7 +25,8 @@
 		unreleaseKoroks,
 		updateFindableAdmin,
 		updateKoroksAdmin,
-        resetUserKoroks
+		resetUserKoroks,
+		editPlayer
 	} from '../query/korok.remote';
 	import { Toggle } from '$lib/components/ui/toggle/index.js';
 	import * as Card from '$lib/components/ui/card';
@@ -34,8 +35,17 @@
 	import * as Select from '$lib/components/ui/select/index.js';
 	import * as InputGroup from '$lib/components/ui/input-group/';
 	import * as ContextMenu from '$lib/components/ui/context-menu/index.js';
-    import { invalidate } from '$app/navigation';
-	import { ArrowDown01, ArrowUp01, Hamburger, SearchIcon, UserLock, Leaf, Download } from 'lucide-svelte';
+	import { invalidate } from '$app/navigation';
+	import {
+		ArrowDown01,
+		ArrowUp01,
+		Hamburger,
+		SearchIcon,
+		UserLock,
+		Leaf,
+		Download
+	} from 'lucide-svelte';
+	import { iconImages, korokImages } from '$lib/generated/images';
 
 	let adminDataPromise = getAdminData();
 	let adminData = $derived(adminDataPromise.current ?? []);
@@ -47,37 +57,40 @@
 
 	let currentRelease = $state(-1);
 
+	let openPlayer = $state(false);
+	let playerEdit = $state({
+		id: '',
+		name: '',
+		subrole: '',
+		subtext: '',
+		icon: '',
+		adminOrder: 0
+	});
+
 	let playersPromise = getUserFinds();
 	let sortDir = $state('desc');
 	let filterValue = $state('');
-    let sortedPlayers = $derived.by(() => {
-        const all = playersPromise.current ?? [];
-        const specialNames = ['RyGuy', 'Sogga', 'LVGHunting']; // ← edit this list as needed
-        const special = all.filter(p => specialNames.includes(p.user.name));
-        const regular = all.filter(p => !specialNames.includes(p.user.name));
+	let sortedPlayers = $derived.by(() => {
+		let all = playersPromise.current ?? [];
 
-        // Sort regular players by koroksFound (respecting sortDir)
-        const sortedRegular = [...regular].sort((a, b) => {
-            const el1 = sortDir === 'asc' ? a : b;
-            const el2 = sortDir === 'asc' ? b : a;
-            return el1.koroksFound - el2.koroksFound;
-        });
+		all.sort((a, b) => {
+			const el1 = sortDir === 'asc' ? a : b;
+			const el2 = sortDir === 'asc' ? b : a;
+			return (
+				(el1.user.role === 'admin'
+					? el2.user.role === 'admin'
+						? el2.user.adminOrder - el1.user.adminOrder
+						: -1
+					: 1) ||
+				el1.koroksFound - el2.koroksFound ||
+				(el1.lastFoundAt?.getMilliseconds() ?? 0) - (el2.lastFoundAt?.getMilliseconds() ?? 0)
+			);
+		});
 
-        // Apply search filter (case‑insensitive)
-        const filteredRegular = sortedRegular.filter(p =>
-            p.user.name.toLowerCase().includes(filterValue.toLowerCase())
-        );
-        const filteredSpecial = special.filter(p =>
-            p.user.name.toLowerCase().includes(filterValue.toLowerCase())
-        );
+		all = all.filter((p) => p.user.name.toLowerCase().includes(filterValue.toLowerCase()));
 
-        // Keep special users in a fixed order (RyGuy, LVGHunting, Sogga)
-        const orderedSpecial = specialNames
-        .map(name => filteredSpecial.find(p => p.user.name === name))
-        .filter(Boolean); // remove undefined entries
-
-        return [...filteredRegular, ...orderedSpecial];
-    });
+		return all;
+	});
 
 	$effect(() => {
 		if (currentRelease === -1) {
@@ -85,11 +98,11 @@
 		}
 	});
 
-    let markersFiltered = $derived(
-    markers.current
-        ?.filter((m) => m?.release === currentRelease)
-        .sort((a, b) => a.number - b.number) ?? []
-    );
+	let markersFiltered = $derived(
+		markers.current
+			?.filter((m) => m?.release === currentRelease)
+			.sort((a, b) => a.number - b.number) ?? []
+	);
 
 	let nextType = $derived(((markersFiltered.at(-1)?.type ?? -1) + 1) % 13);
 
@@ -119,7 +132,7 @@
 		isRelease: false
 	});
 
-    let adding = $state(false);
+	let adding = $state(false);
 </script>
 
 <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -145,7 +158,7 @@
 					type="single"
 					bind:value={() => currentRelease.toString(), (e) => (currentRelease = Number(e))}
 				>
-					<Select.Trigger class="w-28 border-2 bg-background font-black truncate">
+					<Select.Trigger class="w-28 truncate border-2 bg-background font-black">
 						{#if currentRelease === -1}
 							No Releases
 						{:else}
@@ -345,33 +358,35 @@
 						</Card.Description>
 					</div>
 
-                    <div class="ml-auto">
-                        <Button variant="secondary"
-                            onclick={() => {
-                                window.location.href = '/api/export-all-koroks';
-                            }}
-                        >
-                            <Download /> Export All
-                        </Button>
+					<div class="ml-auto">
+						<Button
+							variant="secondary"
+							onclick={() => {
+								window.location.href = '/api/export-all-koroks';
+							}}
+						>
+							<Download /> Export All
+						</Button>
 
-                        <Button disabled={adding}
-                            onclick={() => {
-                                openKorok = true;
+						<Button
+							disabled={adding}
+							onclick={() => {
+								openKorok = true;
 
-                                newKorok = {
-                                    description: '',
-                                    lat: 42.0,
-                                    lng: -73.0,
-                                    number: nextNumber,
-                                    release: currentRelease === -1 ? 0 : currentRelease,
-                                    type: nextType,
-                                    isRelease: false
-                                };
-                            }}
-                        >
-                            <Leaf /> Create Korok
-                        </Button>
-                    </div>
+								newKorok = {
+									description: '',
+									lat: 42.0,
+									lng: -73.0,
+									number: nextNumber,
+									release: currentRelease === -1 ? 0 : currentRelease,
+									type: nextType,
+									isRelease: false
+								};
+							}}
+						>
+							<Leaf /> Create Korok
+						</Button>
+					</div>
 				</div>
 			</Card.Header>
 
@@ -395,13 +410,15 @@
 									</div>
 
 									<div class="min-w-0">
-										<p class="text-lg font-[hylia] tracking-wider text-muted-foreground uppercase inline">
-											Korok 
+										<p
+											class="inline font-[hylia] text-lg tracking-wider text-muted-foreground uppercase"
+										>
+											Korok
 										</p>
 
-										<p class="font-[hylia] text-xl text-foreground inline">
-                                            #{tripleNumber(korok.number)}
-                                        </p>
+										<p class="inline font-[hylia] text-xl text-foreground">
+											#{tripleNumber(korok.number)}
+										</p>
 
 										{#if korok.description}
 											<p class="truncate text-sm text-muted-foreground">
@@ -564,7 +581,7 @@
 
 			<Card.Content class="p-4 sm:p-6">
 				<div class="flex max-h-100 flex-col gap-3 overflow-auto">
-					{#each sortedPlayers as player, index (player.user.id)}
+					{#each sortedPlayers as player, index (player?.user.id)}
 						{@const rank = index + 1}
 						<ContextMenu.Root>
 							<ContextMenu.Trigger>
@@ -626,35 +643,50 @@
 							<ContextMenu.Content>
 								<ContextMenu.Item
 									onclick={async () => {
-                                        if (confirm("You sure bro?")) {
-                                            await toggleAdmin({ userid: player.user.id });
-                                            playersPromise.refresh();
-                                        }
+										playerEdit = {
+											id: player.user.id,
+											adminOrder: player.user.adminOrder,
+											icon: player.user.icon,
+											name: player.user.name,
+											subrole: player.user.subrole,
+											subtext: player.user.subtext
+										};
+										openPlayer = true;
+									}}
+								>
+									Edit Player
+								</ContextMenu.Item>
+								<ContextMenu.Item
+									onclick={async () => {
+										if (confirm('You sure bro?')) {
+											await toggleAdmin({ userid: player.user.id });
+											playersPromise.refresh();
+										}
 									}}>Toggle Admin</ContextMenu.Item
 								>
 								<ContextMenu.Item
 									onclick={async () => {
-                                        if (confirm("You sure bro?")) {
-										    await toggleMuncher({ userid: player.user.id });
-										    playersPromise.refresh();
-                                        }
+										if (confirm('You sure bro?')) {
+											await toggleMuncher({ userid: player.user.id });
+											playersPromise.refresh();
+										}
 									}}>Toggle Muncher</ContextMenu.Item
 								>
 								<ContextMenu.Item
 									onclick={async () => {
-                                        if (confirm("Are you sure you want to delete this user?")) {
-                                            await deleteUser({ userid: player.user.id });
-                                            playersPromise.refresh();
-                                        }
+										if (confirm('Are you sure you want to delete this user?')) {
+											await deleteUser({ userid: player.user.id });
+											playersPromise.refresh();
+										}
 									}}>Delete User</ContextMenu.Item
 								>
-                                <ContextMenu.Item
+								<ContextMenu.Item
 									onclick={async () => {
-                                        if (confirm("Are you sure you want to reset this user's Korok finds?")) {
-                                            await resetUserKoroks({ userid: player.user.id });
-                                            playersPromise.refresh();
-                                            await invalidate('app:korok-count');
-                                        }
+										if (confirm("Are you sure you want to reset this user's Korok finds?")) {
+											await resetUserKoroks({ userid: player.user.id });
+											playersPromise.refresh();
+											await invalidate('app:korok-count');
+										}
 									}}>Reset Korok finds</ContextMenu.Item
 								>
 							</ContextMenu.Content>
@@ -664,18 +696,23 @@
 			</Card.Content>
 		</Card.Root>
 	</section>
-    <!-- Disclaimer -->
-    <section>
-        <br>
-        <p style="text-align: center" class="mt-1">
-            Made by RPI students, for RPI students.<br>
-            Not endorsed or sponsored by Rensselaer Polytechnic Institute.<br>
-            The code for this website can be found <a style="text-decoration: underline;" class="text-primary" href="https://github.com/battistary/korok">here</a>.
-        </p> 
-    </section>
+	<!-- Disclaimer -->
+	<section>
+		<br />
+		<p style="text-align: center" class="mt-1">
+			Made by RPI students, for RPI students.<br />
+			Not endorsed or sponsored by Rensselaer Polytechnic Institute.<br />
+			The code for this website can be found
+			<a
+				style="text-decoration: underline;"
+				class="text-primary"
+				href="https://github.com/battistary/korok">here</a
+			>.
+		</p>
+	</section>
 </div>
 <!-- Create / Edit Dialog -->
-<Dialog.Root bind:open={openKorok} >
+<Dialog.Root bind:open={openKorok}>
 	<Dialog.Content class="max-h-[90vh] overflow-y-auto sm:max-w-lg">
 		<Dialog.Header>
 			<Dialog.Title class="text-2xl font-black">
@@ -753,11 +790,11 @@
 					</Select.Trigger>
 
 					<Select.Content>
-						{#each [...Array(13).keys()] as num (num)}
-							<Select.Item value={num.toString()}>
+						{#each korokImages as img, i (img)}
+							<Select.Item value={i.toString()}>
 								<div class="flex items-center gap-2">
-									<img class="size-5" alt={`Korok ${num}`} src={`/koroks/k_${num}.png`} />
-									Type {num}
+									<img class="size-5" alt={`Korok ${img}`} src={`/koroks/${img}`} />
+									Type {i}
 								</div>
 							</Select.Item>
 						{/each}
@@ -796,24 +833,109 @@
 			{:else}
 				<Button
 					onclick={async () => {
-                        adding = true;
+						adding = true;
 						await addKoroksAdmin({
 							...newKorok,
 							release: newKorok.release === -1 ? 0 : newKorok.release
 						});
 						nextNumber++;
-                        nextType = (nextType + 1) % 13;
+						nextType = (nextType + 1) % 13;
 						await markers.refresh();
 						await adminDataPromise.refresh();
 						changeId = '';
-                        adding = false;
-                        openKorok = false;
+						adding = false;
+						openKorok = false;
 					}}
 					class={buttonVariants({ variant: 'default' })}
 				>
-                    {#if adding}<Spinner />{/if} Create Korok
+					{#if adding}<Spinner />{/if} Create Korok
 				</Button>
 			{/if}
 		</Dialog.Footer>
 	</Dialog.Content>
+</Dialog.Root>
+
+<Dialog.Root bind:open={openPlayer}>
+	<Dialog.Content class="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+		<Dialog.Header>
+			<Dialog.Title class="text-2xl font-black">Edit player</Dialog.Title>
+
+			<Dialog.Description>Edit Player</Dialog.Description>
+		</Dialog.Header>
+
+		<div class="flex flex-col gap-4">
+			<div class="rounded-lg bg-muted p-3 text-sm">
+				<span class="font-bold">Player ID:</span>
+				<span class="font-mono">{changeId}</span>
+			</div>
+
+			<div>
+				<Label for="name">Name</Label>
+				<Input id="name" bind:value={playerEdit.name} placeholder="Player Name" />
+			</div>
+			<div>
+				<Label for="subrole">Subrole</Label>
+				<Input id="subrole" bind:value={playerEdit.subrole} placeholder="Subrole" />
+			</div>
+			<div>
+				<Label for="subtext">Subtext</Label>
+				<Input id="subtext" bind:value={playerEdit.subtext} placeholder="Subtext" />
+			</div>
+			<div>
+				<Label for="adminOrder">Admin Order</Label>
+				<Input
+					id="adminOrder"
+					type="number"
+					bind:value={playerEdit.adminOrder}
+					placeholder="Order"
+				/>
+			</div>
+
+			<div>
+				<Label for="type">Korok Type</Label>
+
+				<Select.Root type="single" bind:value={playerEdit.icon}>
+					<Select.Trigger class="w-full">
+						<div class="flex items-center gap-2">
+							{#if playerEdit.icon}
+								<img class="size-5" alt={`Korok ${playerEdit.icon}`} src={`${playerEdit.icon}`} />
+								Icon {playerEdit.icon}
+							{:else}
+								No Icon
+							{/if}
+						</div>
+					</Select.Trigger>
+
+					<Select.Content>
+						<Select.Item value="">
+							<div class="flex items-center gap-2">No Icon</div>
+						</Select.Item>
+						{#each iconImages as icon (icon)}
+							<Select.Item value={icon}>
+								<div class="flex items-center gap-2">
+									<img class="size-5" alt={`Korok ${icon}`} src={`${icon}`} />
+									Icon {icon}
+								</div>
+							</Select.Item>
+						{/each}
+					</Select.Content>
+				</Select.Root>
+			</div>
+
+			<Dialog.Footer>
+				<Dialog.Close
+					onclick={async () => {
+						await editPlayer({
+							...playerEdit
+						});
+
+						await playersPromise.refresh();
+					}}
+					class={cn('font-black', buttonVariants({ variant: 'default' }))}
+				>
+					Save Changes
+				</Dialog.Close>
+			</Dialog.Footer>
+		</div></Dialog.Content
+	>
 </Dialog.Root>

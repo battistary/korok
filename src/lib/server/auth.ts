@@ -18,6 +18,30 @@ export const auth = betterAuth({
 				required: true,
 				defaultValue: 'user',
 				input: false
+			},
+			adminOrder: {
+				type: 'number',
+				required: true,
+				defaultValue: 1,
+				input: false
+			},
+			icon: {
+				type: 'string',
+				required: true,
+				defaultValue: '',
+				input: false
+			},
+			subtext: {
+				type: 'string',
+				required: true,
+				defaultValue: '',
+				input: false
+			},
+			subrole: {
+				type: 'string',
+				required: true,
+				defaultValue: '',
+				input: false
 			}
 		}
 	},

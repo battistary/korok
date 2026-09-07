@@ -25,6 +25,10 @@ export const user = sqliteTable("user", {
   role: text("role", { enum: ["user", "admin", "muncher"] })
     .default("user")
     .notNull(),
+  adminOrder: integer("admin_order").default(1).notNull(),
+  icon: text("icon").default("").notNull(),
+  subtext: text("subtext").default("").notNull(),
+  subrole: text("subrole").default("").notNull(),
 });
 
 export const session = sqliteTable(

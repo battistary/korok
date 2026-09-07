@@ -35,31 +35,27 @@
 	);
 	let sortDir = $state('desc');
 	let filterValue = $state('');
-    let sortedPlayers = $derived.by(() => {
-        const all = players.current ?? [];
-        const specialNames = ["RyGuy", "Sogga", "LVGHunting"];
-        const special = all.filter(p => p.user.role === "admin");
-        const regular = all.filter(p => p.user.role !== "admin");
+	let sortedPlayers = $derived.by(() => {
+		let all = players.current ?? [];
 
-        const sortedRegular = [...regular].sort((a, b) => {
-            const el1 = sortDir === 'asc' ? a : b;
-            const el2 = sortDir === 'asc' ? b : a;
-            return (el1.koroksFound - el2.koroksFound) || el1.lastFoundAt.getMilliseconds() - el2.lastFoundAt.getMilliseconds();
-        });
+		all.sort((a, b) => {
+			const el1 = sortDir === 'asc' ? a : b;
+			const el2 = sortDir === 'asc' ? b : a;
+			return (
+				(el1.user.role === 'admin'
+					? el2.user.role === 'admin'
+						? el2.user.adminOrder - el1.user.adminOrder
+						: -1
+					: 1) ||
+				el1.koroksFound - el2.koroksFound ||
+				(el1.lastFoundAt?.getMilliseconds() ?? 0) - (el2.lastFoundAt?.getMilliseconds() ?? 0)
+			);
+		});
 
-        const filteredRegular = sortedRegular.filter(p =>
-            p.user.name.toLowerCase().includes(filterValue.toLowerCase())
-        );
-        const filteredSpecial = special.filter(p =>
-            p.user.name.toLowerCase().includes(filterValue.toLowerCase())
-        );
+		all = all.filter((p) => p.user.name.toLowerCase().includes(filterValue.toLowerCase()));
 
-        const orderedSpecial = specialNames
-        .map(name => filteredSpecial.find(p => p.user.name === name))
-        .filter(Boolean);
-
-        return [...filteredRegular, ...orderedSpecial];
-    });
+		return all;
+	});
 
 	let leaderboardCode = $state('');
 	let newLeaderboardName = $state('');
@@ -67,7 +63,7 @@
 	let joinLeaderboard = $state(false);
 	let createLeaderboard = $state(false);
 
-    let name = $derived(myLeaderboards.find((l) => l.id === leaderboard)?.name);
+	let name = $derived(myLeaderboards.find((l) => l.id === leaderboard)?.name);
 </script>
 
 <div class="mx-auto max-w-4xl px-4 py-8">
@@ -91,15 +87,15 @@
 						type="single"
 						bind:value={() => leaderboard.toString(), (e) => (leaderboard = Number(e))}
 					>
-						<Select.Trigger class="w-28 border-2 bg-background font-black truncate">
+						<Select.Trigger class="w-28 truncate border-2 bg-background font-black">
 							{#if leaderboard === -1}
 								Global
 							{:else}
-                                {name.length > 11 ? name.substring(0, 8) + "..." : name}
+								{(name?.length ?? 0 > 11) ? name?.substring(0, 8) + '...' : name}
 							{/if}
 						</Select.Trigger>
 
-						<Select.Content class="overflow-hidden truncate">
+						<Select.Content class="truncate overflow-hidden">
 							{#each myLeaderboards as leaderboard, index (index)}
 								<Select.Item value={leaderboard.id.toString()} class="truncate overflow-hidden">
 									{leaderboard.name}
@@ -132,12 +128,12 @@
 	</div>
 	<!-- Leaderboard -->
 	<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
-		<Card.Header class="-m-[1px] border-b-2 border-border bg-secondary/60 px-6 py-5">
+		<Card.Header class="-m-px border-b-2 border-border bg-secondary/60 px-6 py-5">
 			<div class="flex items-center justify-between">
 				<div>
 					<Card.Title class="text-2xl font-black">
 						<!-- <Trophy class="inline" /> -->
-                        <img alt="Hestu" src="/hestu.png" class="w-15 inline" />
+						<img alt="Hestu" src="/icons/hestu.png" class="inline w-15" />
 						{leaderboard === -1
 							? 'Hunter Rankings'
 							: myLeaderboards.find((l) => l.id === leaderboard)?.name}
@@ -158,7 +154,10 @@
 
 				<div class="flex flex-col items-end gap-2">
 					<div class="grow rounded-full border-2 border-border bg-background px-4 py-2 font-bold">
-						{Math.max(0, sortedPlayers.length - 3)} Hunter{Math.max(0, sortedPlayers.length - 3) !== 1 ? 's' : ''}
+						{Math.max(0, sortedPlayers.length - 3)} Hunter{Math.max(0, sortedPlayers.length - 3) !==
+						1
+							? 's'
+							: ''}
 					</div>
 					<div class="flex w-30 flex-wrap justify-end gap-2 lg:w-50">
 						<InputGroup.Root class="bg-background ">
@@ -191,7 +190,7 @@
 						<div class="flex items-center gap-4">
 							<!-- Rank -->
 							<div
-								class={`font-[hylia] flex size-12 p-1 shrink-0 items-center justify-center rounded-full border-2 text-xl font-black ${
+								class={`flex size-12 shrink-0 items-center justify-center rounded-full border-2 p-1 font-[hylia] text-xl font-black ${
 									rank === 1
 										? 'border-yellow-600 bg-yellow-400/30 text-yellow-800'
 										: rank === 2
@@ -201,27 +200,15 @@
 												: 'border-border bg-card text-muted-foreground'
 								}`}
 							>
-                                {#if player.user.name === "RyGuy"}
-                                    <img
-                                        class="h-auto max-h-full max-w-full"
-                                        src="hestu.png"
-                                        alt="Hestu"
-                                    />
-                                {:else if player.user.name === "LVGHunting"}
-                                    <img
-                                        class="h-auto max-h-full max-w-full"
-                                        src="kohga.png"
-                                        alt="Kohga"
-                                    />
-                                {:else if player.user.name === "Sogga"}
-                                    <img
-                                        class="h-auto max-h-full max-w-full"
-                                        src="link.png"
-                                        alt="Link"
-                                    />
-                                {:else}
-                                    #{rank}
-                                {/if}
+								{#if player.user.icon}
+									<img
+										class="h-auto max-h-full max-w-full"
+										src={player.user.icon}
+										alt={player.user.name}
+									/>
+								{:else}
+									#{rank}
+								{/if}
 							</div>
 
 							<!-- Player -->
@@ -230,18 +217,12 @@
 									{player.user.name}
 								</p>
 
-                                {#if player.user.name === "RyGuy"}
-									<p class="mt-0.5 text-sm text-muted-foreground">
-                                        <Infinity class="inline" /> Koroks
-									</p>
-                                {:else if player.user.name === "LVGHunting"}
-									<p class="mt-0.5 text-sm text-muted-foreground">
-                                        -1 Koroks
-									</p>
-                                {:else if player.user.name === "Sogga"}
-									<p class="mt-0.5 text-sm text-muted-foreground">
-                                        is a Korok
-									</p>
+								{#if player.user.name === 'RyGuy'}
+									<p class="mt-0.5 text-sm text-muted-foreground">∞ Koroks</p>
+								{:else if player.user.name === 'LVGHunting'}
+									<p class="mt-0.5 text-sm text-muted-foreground">-1 Koroks</p>
+								{:else if player.user.name === 'Sogga'}
+									<p class="mt-0.5 text-sm text-muted-foreground">is a Korok</p>
 								{:else if player.lastFoundAt}
 									<p class="mt-0.5 text-sm text-muted-foreground">
 										Last find:
@@ -254,27 +235,19 @@
 
 							<!-- Score -->
 							<div class="shrink-0 text-right">
-                                {#if player.user.name === "RyGuy"}
-                                    <p class="truncate text-lg font-semibold text-muted-foreground">
-                                        Hestu
-                                    </p>
-                                {:else if player.user.name === "LVGHunting"}
-                                    <p class="text-lg font-semibold text-muted-foreground">
-                                        Admin
-                                    </p>
-                                {:else if player.user.name === "Sogga"}
-                                    <p class="text-lg font-semibold text-muted-foreground">
-                                        Admin
-                                    </p>
-                                {:else}
-                                    <p class="text-3xl font-black text-primary">
-                                        {player.koroksFound}
-                                    </p>
+								{#if player.user.subrole}
+									<p class="truncate text-lg font-semibold text-muted-foreground">
+										{player.user.subrole}
+									</p>
+								{:else}
+									<p class="text-3xl font-black text-primary">
+										{player.koroksFound}
+									</p>
 
-                                    <p class="text-sm font-semibold text-muted-foreground">
-                                        {player.koroksFound === 1 ? 'Korok' : 'Koroks'}
-                                    </p>
-                                {/if}
+									<p class="text-sm font-semibold text-muted-foreground">
+										{player.koroksFound === 1 ? 'Korok' : 'Koroks'}
+									</p>
+								{/if}
 							</div>
 						</div>
 					</div>
@@ -282,15 +255,20 @@
 			</div>
 		</Card.Content>
 	</Card.Root>
-    <!-- Disclaimer -->
-    <section>
-        <br>
-        <p style="text-align: center" class="mt-1">
-            Made by RPI students, for RPI students.<br>
-            Not endorsed or sponsored by Rensselaer Polytechnic Institute.<br>
-            The code for this website can be found <a style="text-decoration: underline;" class="text-primary" href="https://github.com/battistary/korok">here</a>.
-        </p> 
-    </section>
+	<!-- Disclaimer -->
+	<section>
+		<br />
+		<p style="text-align: center" class="mt-1">
+			Made by RPI students, for RPI students.<br />
+			Not endorsed or sponsored by Rensselaer Polytechnic Institute.<br />
+			The code for this website can be found
+			<a
+				style="text-decoration: underline;"
+				class="text-primary"
+				href="https://github.com/battistary/korok">here</a
+			>.
+		</p>
+	</section>
 </div>
 
 <Dialog.Root bind:open={joinLeaderboard}>

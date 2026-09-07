@@ -123,6 +123,23 @@ export const getAreas = query(async () => {
 	return areas;
 });
 
+export const editPlayer = command(
+	v.object({
+		id: v.string(),
+		name: v.string(),
+		subrole: v.string(),
+		subtext: v.string(),
+		icon: v.string(),
+		adminOrder: v.number()
+	}),
+	async (e) => {
+		const u = await getCurrentUser();
+		if (u?.role !== 'admin') return false;
+		await db.update(user).set(e).where(eq(user.id, e.id));
+		return true;
+	}
+);
+
 export const getKoroksAdmin = query(async () => {
 	const user = await getCurrentUser();
 	if (user?.role === 'admin') {
