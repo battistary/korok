@@ -37,14 +37,14 @@
 	let filterValue = $state('');
     let sortedPlayers = $derived.by(() => {
         const all = players.current ?? [];
-        const specialNames = ['RyGuy', 'Sogga', 'LVGHunting'];
-        const special = all.filter(p => specialNames.includes(p.user.name));
-        const regular = all.filter(p => !specialNames.includes(p.user.name));
+        const specialNames = ["RyGuy", "Sogga", "LVGHunting"];
+        const special = all.filter(p => p.user.role === "admin");
+        const regular = all.filter(p => p.user.role !== "admin");
 
         const sortedRegular = [...regular].sort((a, b) => {
             const el1 = sortDir === 'asc' ? a : b;
             const el2 = sortDir === 'asc' ? b : a;
-            return el1.koroksFound - el2.koroksFound;
+            return (el1.koroksFound - el2.koroksFound) || el1.lastFoundAt.getMilliseconds() - el2.lastFoundAt.getMilliseconds();
         });
 
         const filteredRegular = sortedRegular.filter(p =>
@@ -226,7 +226,7 @@
 
 							<!-- Player -->
 							<div class="min-w-0 flex-1">
-								<p class="truncate font-[hylia] text-xl text-foreground">
+								<p class="font-[hylia] text-xl text-foreground">
 									{player.user.name}
 								</p>
 
@@ -255,19 +255,19 @@
 							<!-- Score -->
 							<div class="shrink-0 text-right">
                                 {#if player.user.name === "RyGuy"}
-                                    <p class="text-xl font-semibold text-muted-foreground">
+                                    <p class="truncate text-lg font-semibold text-muted-foreground">
                                         Hestu
                                     </p>
                                 {:else if player.user.name === "LVGHunting"}
-                                    <p class="text-xl font-semibold text-muted-foreground">
-                                        Hestu's Assistant
+                                    <p class="text-lg font-semibold text-muted-foreground">
+                                        Admin
                                     </p>
                                 {:else if player.user.name === "Sogga"}
-                                    <p class="text-xl font-semibold text-muted-foreground">
-                                        Hestu's Assistant
+                                    <p class="text-lg font-semibold text-muted-foreground">
+                                        Admin
                                     </p>
                                 {:else}
-                                    <p class="text-xl font-black text-primary">
+                                    <p class="text-3xl font-black text-primary">
                                         {player.koroksFound}
                                     </p>
 
