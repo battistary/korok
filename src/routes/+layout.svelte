@@ -43,18 +43,8 @@
 		</a>
 	</div>
 
-	{#if !data.user}
-		<a
-			href="/login"
-			class={cn(
-				'mr-0 block px-3 py-3 underline decoration-transparent decoration-2 underline-offset-24 hover:decoration-accent lg:p-0 lg:px-0 lg:underline-offset-21',
-				page.url.pathname === '/login' && 'decoration-accent'
-			)}
-		>
-			Login/Register
-		</a>
-	{:else}
-        {#if data.user.name === "RyGuy" || data.user.name === "Sogga" || data.user.name === "LVGHunting"}
+	{#if data.user}
+        {#if data.user.subrole}
 		    <span
 			    class="inline mr-5 rounded border bg-secondary/60 p-1 px-3 font-[hylia] whitespace-nowrap text-secondary-foreground shadow-sm"
     		>
@@ -87,9 +77,12 @@
 			<ul
 				class="items-center justify-between pt-4 font-[hylia] text-base text-foreground lg:flex lg:pt-0"
 			>
-				{@render link({ href: '/', label: 'Home' })}
-				{@render link({ href: '/leaderboard', label: 'Leaderboard' })}
-				{@render link({ href: '/korok-stats', label: 'Koroks' })}
+                {@render link({ href: '/', label: 'Home' })}
+	            {#if !data.user}
+		            {@render link({ href: '/login', label: 'Login/Register' })}
+                {/if}
+                {@render link({ href: '/leaderboard', label: 'Leaderboard' })}
+                {@render link({ href: '/korok-stats', label: 'Koroks' })}
 				{#if data.user?.role === 'admin'}
 					{@render link({ href: '/admin', label: 'Admin' })}
 				{/if}

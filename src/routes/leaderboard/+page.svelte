@@ -184,9 +184,10 @@
 				{#each sortedPlayers as player, index (player.user.id)}
 					{@const rank = index + 1}
 
-					<div
-						class={`group relative overflow-hidden rounded-xl border-2 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${'bg-secondary/60'}`}
-					>
+                    <div
+                        class="group relative overflow-hidden rounded-xl border-2 border-border/70 bg-secondary/60 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
+                    >
+
 						<div class="flex items-center gap-4">
 							<!-- Rank -->
 							<div
@@ -217,12 +218,10 @@
 									{player.user.name}
 								</p>
 
-								{#if player.user.name === 'RyGuy'}
-									<p class="mt-0.5 text-sm text-muted-foreground">∞ Koroks</p>
-								{:else if player.user.name === 'LVGHunting'}
-									<p class="mt-0.5 text-sm text-muted-foreground">-1 Koroks</p>
-								{:else if player.user.name === 'Sogga'}
-									<p class="mt-0.5 text-sm text-muted-foreground">is a Korok</p>
+                                {#if player.user.subtext}
+									<p class="mt-0.5 text-sm text-muted-foreground">
+                                        {player.user.subtext}
+                                    </p>
 								{:else if player.lastFoundAt}
 									<p class="mt-0.5 text-sm text-muted-foreground">
 										Last find:
