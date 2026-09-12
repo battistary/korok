@@ -4,8 +4,6 @@ import type { PageServerLoad } from './$types';
 import { auth } from '$lib/server/auth';
 import { APIError } from 'better-auth/api';
 
-export const config = { runtime: 'edge' };
-
 export const load: PageServerLoad = (event) => {
 	if (event.locals.user) {
 		const cookie = event.cookies.get('loggedInKorok');
