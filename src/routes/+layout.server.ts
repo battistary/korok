@@ -1,8 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { getMyFinds } from './query/korok.remote';
 
-export const config = { runtime: 'edge' };
-
 export const load: PageServerLoad = async (event) => {
     event.depends('app:korok-count'); // <-- add this
 

@@ -1,8 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
-export const config = { runtime: 'edge' };
-
 export const load: PageServerLoad = (event) => {
 	if (
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
