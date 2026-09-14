@@ -39,16 +39,19 @@
 		let all = players.current ?? [];
 
 		all.sort((a, b) => {
-			const el1 = sortDir === 'asc' ? a : b;
-			const el2 = sortDir === 'asc' ? b : a;
+			const el1 = a;
+			const el2 = b;
 			return (
 				(el1.user.role === 'admin'
 					? el2.user.role === 'admin'
 						? el2.user.adminOrder - el1.user.adminOrder
 						: -1
 					: 1) ||
-				el1.koroksFound - el2.koroksFound ||
-				(el1.lastFoundAt?.getMilliseconds() ?? 0) - (el2.lastFoundAt?.getMilliseconds() ?? 0)
+				(sortDir === 'asc'
+					? el1.koroksFound - el2.koroksFound ||
+						(el1.lastFoundAt?.getMilliseconds() ?? 0) - (el2.lastFoundAt?.getMilliseconds() ?? 0)
+					: el2.koroksFound - el1.koroksFound ||
+						(el2.lastFoundAt?.getMilliseconds() ?? 0) - (el1.lastFoundAt?.getMilliseconds() ?? 0))
 			);
 		});
 
@@ -184,10 +187,9 @@
 				{#each sortedPlayers as player, index (player.user.id)}
 					{@const rank = index + 1}
 
-                    <div
-                        class="group relative overflow-hidden rounded-xl border-2 border-border/70 bg-secondary/60 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
-                    >
-
+					<div
+						class="group relative overflow-hidden rounded-xl border-2 border-border/70 bg-secondary/60 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
+					>
 						<div class="flex items-center gap-4">
 							<!-- Rank -->
 							<div
@@ -218,10 +220,10 @@
 									{player.user.name}
 								</p>
 
-                                {#if player.user.subtext}
+								{#if player.user.subtext}
 									<p class="mt-0.5 text-sm text-muted-foreground">
-                                        {player.user.subtext}
-                                    </p>
+										{player.user.subtext}
+									</p>
 								{:else if player.lastFoundAt}
 									<p class="mt-0.5 text-sm text-muted-foreground">
 										Last find:
