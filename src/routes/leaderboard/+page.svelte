@@ -39,8 +39,8 @@
 		let all = players.current ?? [];
 
 		all.sort((a, b) => {
-			const el1 = a;
-			const el2 = b;
+			const el1 = b;
+			const el2 = a;
 			return (
 				(el1.user.role === 'admin'
 					? el2.user.role === 'admin'
