@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card/';
-	import { ArrowDown01, ArrowUp01, SearchIcon, Trophy, Infinity } from 'lucide-svelte';
+	import { ArrowDown01, ArrowUp01, SearchIcon } from 'lucide-svelte';
 	import {
 		getLeaderBoardFinds,
 		getMyLeaderboard,
@@ -17,7 +17,7 @@
 	import type { PageProps } from './$types';
 	import * as Dialog from '$lib/components/ui/dialog/';
 	import * as InputOTP from '$lib/components/ui/input-otp/';
-	import { cn } from '$lib/utils';
+	import { cn, swalFire } from '$lib/utils';
 	import { REGEXP_ONLY_CHARS } from 'bits-ui';
 
 	let { data }: PageProps = $props();
@@ -36,37 +36,37 @@
 	let sortDir = $state('desc');
 	let filterValue = $state('');
 
-    // Canonical ranking — computed once, direction-agnostic
-    let rankedPlayers = $derived.by(() => {
-        let all = [...(players.current ?? [])];
-        all.sort((a, b) => {
-            const el1 = b;
-            const el2 = a;
-            const adminCmp =
-                el1.user.role === 'admin'
-                    ? el2.user.role === 'admin'
-                        ? el2.user.adminOrder - el1.user.adminOrder
-                        : -1
-                    : el2.user.role === 'admin'
-                        ? 1
-                        : 0;
-            if (adminCmp !== 0) return adminCmp;
-            return (
-                el1.koroksFound - el2.koroksFound ||
-                    (el2.lastFoundAt?.getTime() ?? 0) - (el1.lastFoundAt?.getTime() ?? 0)
-            );
-        });
-        return all.map((player, i) => ({ player, rank: i + 1 }));
-    });
+	// Canonical ranking — computed once, direction-agnostic
+	let rankedPlayers = $derived.by(() => {
+		let all = [...(players.current ?? [])];
+		all.sort((a, b) => {
+			const el1 = b;
+			const el2 = a;
+			const adminCmp =
+				el1.user.role === 'admin'
+					? el2.user.role === 'admin'
+						? el2.user.adminOrder - el1.user.adminOrder
+						: -1
+					: el2.user.role === 'admin'
+						? 1
+						: 0;
+			if (adminCmp !== 0) return adminCmp;
+			return (
+				el1.koroksFound - el2.koroksFound ||
+				(el2.lastFoundAt?.getTime() ?? 0) - (el1.lastFoundAt?.getTime() ?? 0)
+			);
+		});
+		return all.map((player, i) => ({ player, rank: i + 1 }));
+	});
 
-    // Display order — reordered copy of the ranked list
-    let sortedPlayers = $derived.by(() => {
-        let all = [...rankedPlayers];
-        if (sortDir === 'asc') all.sort((a, b) => b.rank - a.rank);
-        return all.filter(({ player }) =>
-            player.user.name.toLowerCase().includes(filterValue.toLowerCase())
-        );
-    });
+	// Display order — reordered copy of the ranked list
+	let sortedPlayers = $derived.by(() => {
+		let all = [...rankedPlayers];
+		if (sortDir === 'asc') all.sort((a, b) => b.rank - a.rank);
+		return all.filter(({ player }) =>
+			player.user.name.toLowerCase().includes(filterValue.toLowerCase())
+		);
+	});
 
 	let leaderboardCode = $state('');
 	let newLeaderboardName = $state('');
@@ -165,10 +165,7 @@
 
 				<div class="flex flex-col items-end gap-2">
 					<div class="grow rounded-full border-2 border-border bg-background px-4 py-2 font-bold">
-						{Math.max(0, sortedPlayers.length - 3)} Hunter{Math.max(0, sortedPlayers.length - 3) !==
-						1
-							? 's'
-							: ''}
+						{sortedPlayers.length} Hunter{sortedPlayers.length !== 1 ? 's' : ''}
 					</div>
 					<div class="flex w-30 flex-wrap justify-end gap-2 lg:w-50">
 						<InputGroup.Root class="bg-background ">
@@ -192,73 +189,72 @@
 
 		<Card.Content class="p-4 sm:p-6">
 			<div class="flex flex-col gap-3">
-                {#each sortedPlayers as { player, rank } (player.user.id)}
+				{#each sortedPlayers as { player, rank } (player.user.id)}
+					<div
+						class="group relative overflow-hidden rounded-xl border-2 border-border/70 bg-secondary/60 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
+					>
+						<div class="flex items-center gap-4">
+							<!-- Rank -->
+							<div
+								class={`flex size-12 shrink-0 items-center justify-center rounded-full border-2 p-1 font-[hylia] text-xl font-black ${
+									rank === 1
+										? 'border-yellow-600 bg-yellow-400/30 text-yellow-800'
+										: rank === 2
+											? 'border-slate-400 bg-slate-300/40 text-slate-700'
+											: rank === 3
+												? 'border-orange-700 bg-orange-400/30 text-orange-800'
+												: 'border-border bg-card text-muted-foreground'
+								}`}
+							>
+								{#if player.user.icon}
+									<img
+										class="h-auto max-h-full max-w-full"
+										src={player.user.icon}
+										alt={player.user.name}
+									/>
+								{:else}
+									#{rank}
+								{/if}
+							</div>
 
-                <div
-                    class="group relative overflow-hidden rounded-xl border-2 border-border/70 bg-secondary/60 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
-                >
-                    <div class="flex items-center gap-4">
-                        <!-- Rank -->
-                        <div
-                            class={`flex size-12 shrink-0 items-center justify-center rounded-full border-2 p-1 font-[hylia] text-xl font-black ${
-                                rank === 1
-                                    ? 'border-yellow-600 bg-yellow-400/30 text-yellow-800'
-                                    : rank === 2
-                                        ? 'border-slate-400 bg-slate-300/40 text-slate-700'
-                                        : rank === 3
-                                            ? 'border-orange-700 bg-orange-400/30 text-orange-800'
-                                            : 'border-border bg-card text-muted-foreground'
-                            }`}
-                        >
-                            {#if player.user.icon}
-                                <img
-                                    class="h-auto max-h-full max-w-full"
-                                    src={player.user.icon}
-                                    alt={player.user.name}
-                                />
-                            {:else}
-                                #{rank}
-                            {/if}
-                        </div>
+							<!-- Player -->
+							<div class="min-w-0 flex-1">
+								<p class="font-[hylia] text-xl text-foreground">
+									{player.user.name}
+								</p>
 
-                        <!-- Player -->
-                        <div class="min-w-0 flex-1">
-                            <p class="font-[hylia] text-xl text-foreground">
-                                {player.user.name}
-                            </p>
+								{#if player.user.subtext}
+									<p class="mt-0.5 text-sm text-muted-foreground">
+										{player.user.subtext}
+									</p>
+								{:else if player.lastFoundAt}
+									<p class="mt-0.5 text-sm text-muted-foreground">
+										Last find:
+										{player.lastFoundAt.toLocaleString()}
+									</p>
+								{:else}
+									<p class="mt-0.5 text-sm text-muted-foreground">No Koroks found</p>
+								{/if}
+							</div>
 
-                            {#if player.user.subtext}
-                                <p class="mt-0.5 text-sm text-muted-foreground">
-                                    {player.user.subtext}
-                                </p>
-                            {:else if player.lastFoundAt}
-                                <p class="mt-0.5 text-sm text-muted-foreground">
-                                    Last find:
-                                    {player.lastFoundAt.toLocaleString()}
-                                </p>
-                            {:else}
-                                <p class="mt-0.5 text-sm text-muted-foreground">No Koroks found</p>
-                            {/if}
-                        </div>
+							<!-- Score -->
+							<div class="shrink-0 text-right">
+								{#if player.user.subrole}
+									<p class="truncate text-lg font-semibold text-muted-foreground">
+										{player.user.subrole}
+									</p>
+								{:else}
+									<p class="text-3xl font-black text-primary">
+										{player.koroksFound}
+									</p>
 
-                        <!-- Score -->
-                        <div class="shrink-0 text-right">
-                            {#if player.user.subrole}
-                                <p class="truncate text-lg font-semibold text-muted-foreground">
-                                    {player.user.subrole}
-                                </p>
-                            {:else}
-                                <p class="text-3xl font-black text-primary">
-                                    {player.koroksFound}
-                                </p>
-
-                                <p class="text-sm font-semibold text-muted-foreground">
-                                    {player.koroksFound === 1 ? 'Korok' : 'Koroks'}
-                                </p>
-                            {/if}
-                        </div>
-                    </div>
-                </div>
+									<p class="text-sm font-semibold text-muted-foreground">
+										{player.koroksFound === 1 ? 'Korok' : 'Koroks'}
+									</p>
+								{/if}
+							</div>
+						</div>
+					</div>
 				{/each}
 			</div>
 		</Card.Content>
@@ -300,8 +296,16 @@
 				class={cn('font-black', buttonVariants({ variant: 'default' }))}
 				onclick={async () => {
 					let result = await joinLeaderBoard({ code: leaderboardCode });
-					if (result) {
-						myLeaderboardsPromise.refresh();
+					if (typeof result === 'string') {
+						swalFire({ title: 'Error', text: result, icon: 'error' });
+					} else {
+						swalFire({
+							title: 'Success',
+							text: 'You have joined the leaderboard!',
+							icon: 'success'
+						});
+						await myLeaderboardsPromise.refresh();
+						leaderboard = result;
 					}
 				}}>Join leaderboard</Dialog.Close
 			>

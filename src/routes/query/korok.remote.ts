@@ -387,17 +387,27 @@ export const getMyLeaderboard = query(async () => {
 
 export const joinLeaderBoard = query(v.object({ code: v.string() }), async (e) => {
 	const user = await getCurrentUser();
-	if (!user) return false;
+	if (!user) return 'You must be logged in to join a leaderboard.';
 	const leaderBoard = await db
 		.select({ id: leaderBoards.id })
 		.from(leaderBoards)
 		.where(eq(leaderBoards.code, e.code));
-	if (!leaderBoard[0]) return false;
+	if (!leaderBoard[0]) return 'Could not find leaderboard with that code.';
+	const inBoard = await db
+		.select({ id: leaderBoardUsers.userId })
+		.from(leaderBoardUsers)
+		.where(
+			and(
+				eq(leaderBoardUsers.leaderBoardId, leaderBoard[0].id),
+				eq(leaderBoardUsers.userId, user.id)
+			)
+		);
+	if (inBoard[0]) return 'You are already in this leaderboard.';
 	await db.insert(leaderBoardUsers).values({
 		leaderBoardId: leaderBoard[0].id,
 		userId: user.id
 	});
-	return true;
+	return leaderBoard[0].id;
 });
 
 export const makeLeaderBoard = command(

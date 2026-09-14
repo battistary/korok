@@ -1,6 +1,8 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import QRCode from 'qrcode';
+import Swal from 'sweetalert2';
+import type { SweetAlertOptions } from 'sweetalert2';
 
 export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
@@ -91,4 +93,176 @@ export async function generateQRCode({
 
 export function tripleNumber(number: number): string {
 	return number < 100 ? (number < 10 ? '00' : '0') + number : number.toString();
+}
+export const sweetAlertClasses = {
+	popup: `
+    !bg-background
+    !text-foreground
+    !border
+    !border-border
+    !rounded-lg
+    !shadow-lg
+  `,
+	title: `
+    !text-foreground
+    !text-lg
+    !font-semibold
+  `,
+	htmlContainer: `
+    !text-muted-foreground
+    !text-sm
+  `,
+	confirmButton: `
+    !items-center
+    !justify-center
+    !whitespace-nowrap
+    !rounded-md
+    !text-sm
+    !font-medium
+    !ring-offset-background
+    !transition-colors
+    !focus-visible:outline-none
+    !focus-visible:ring-2
+    !focus-visible:ring-ring
+    !focus-visible:ring-offset-2
+    !disabled:pointer-events-none
+    !disabled:opacity-50
+    !bg-primary
+    !text-primary-foreground
+    !hover:bg-primary/90
+    !px-4
+    !py-2
+  `,
+	cancelButton: `
+    !items-center
+    !justify-center
+    !whitespace-nowrap
+    !rounded-md
+    !text-sm
+    !font-medium
+    !ring-offset-background
+    !transition-colors
+    !focus-visible:outline-none
+    !focus-visible:ring-2
+    !focus-visible:ring-ring
+    !focus-visible:ring-offset-2
+    !disabled:pointer-events-none
+    !disabled:opacity-50
+    !border
+    !border-input
+    !bg-background
+    !hover:bg-accent
+    !hover:text-accent-foreground
+    !px-4
+    !py-2
+  `,
+	denyButton: `
+    !items-center
+    !justify-center
+    !whitespace-nowrap
+    !rounded-md
+    !text-sm
+    !font-medium
+    !ring-offset-background
+    !transition-colors
+    !focus-visible:outline-none
+    !focus-visible:ring-2
+    !focus-visible:ring-ring
+    !focus-visible:ring-offset-2
+    !disabled:pointer-events-none
+    !disabled:opacity-50
+    !bg-destructive
+    !text-destructive-foreground
+    !hover:bg-destructive/90
+    !px-4
+    !py-2
+  `,
+	actions: `
+    !gap-2
+    !mt-4
+  `,
+	input: `
+    !flex
+    !h-10
+    !w-full
+    !rounded-md
+    !border
+    !border-input
+    !bg-background
+    !px-3
+    !py-2
+    !text-sm
+    !text-foreground
+    !ring-offset-background
+    !placeholder:text-muted-foreground
+    !focus-visible:outline-none
+    !focus-visible:ring-2
+    !focus-visible:ring-ring
+    !focus-visible:ring-offset-2
+  `,
+	textarea: `
+    !flex
+    !min-h-[80px]
+    !w-full
+    !rounded-md
+    !border
+    !border-input
+    !bg-background
+    !px-3
+    !py-2
+    !text-sm
+    !text-foreground
+    !ring-offset-background
+    !placeholder:text-muted-foreground
+    !focus-visible:outline-none
+    !focus-visible:ring-2
+    !focus-visible:ring-ring
+    !focus-visible:ring-offset-2
+  `,
+	select: `
+    !flex
+    !h-10
+    !w-full
+    !rounded-md
+    !border
+    !border-input
+    !bg-background
+    !px-3
+    !py-2
+    !text-sm
+    !text-foreground
+    !ring-offset-background
+    !focus:outline-none
+    !focus:ring-2
+    !focus:ring-ring
+  `,
+	validationMessage: `
+    !text-destructive
+    !text-sm
+    !mt-2
+  `,
+	loader: `
+    !text-primary
+  `,
+	footer: `
+    !text-muted-foreground
+    !text-xs
+    !border-t
+    !border-border
+    !mt-4
+    !pt-3
+  `,
+	closeButton: `
+    !text-muted-foreground
+    !hover:text-foreground
+    !hover:bg-accent
+    !rounded-md
+    !transition-colors
+    !focus:outline-none
+    !focus:ring-2
+    !focus:ring-ring
+  `
+};
+export function swalFire(props: SweetAlertOptions) {
+	return Swal.fire({ ...props, customClass: sweetAlertClasses });
 }
