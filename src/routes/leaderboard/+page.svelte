@@ -88,7 +88,7 @@
 			<div>
 				<h1 class="text-5xl font-black tracking-tight text-foreground">Hunter Leaderboard</h1>
 
-				<p class="mt-2 text-lg text-muted-foreground">The greatest Korok hunters.</p>
+				<p class="mt-2 text-lg text-muted-foreground">The Greatest Korok Hunters</p>
 			</div>
 
 			<div

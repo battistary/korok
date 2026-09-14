@@ -28,7 +28,7 @@
 	<div class="mb-8 text-center">
 		<h1 class="text-5xl font-black tracking-tight text-foreground">Korok Statistics</h1>
 
-		<p class="mt-2 text-lg text-muted-foreground">The most discovered Koroks</p>
+		<p class="mt-2 text-lg text-muted-foreground">The Most Discovered Koroks</p>
 	</div>
 
 	<!-- Leaderboard -->
