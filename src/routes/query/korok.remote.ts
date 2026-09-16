@@ -1,7 +1,7 @@
 import { area, korok, finds, user, leaderBoardUsers, leaderBoards } from '$lib/server/db/schema';
 import { command, query } from '$app/server';
 import { db } from '$lib/server/db';
-import { and, asc, count, desc, eq, max, inArray } from 'drizzle-orm';
+import { and, asc, count, desc, eq, max, inArray, sql } from 'drizzle-orm';
 import { getCurrentUser } from '$lib/server/auth';
 import * as v from 'valibot';
 
@@ -275,7 +275,21 @@ export const getUserFinds = query(async () => {
 		.leftJoin(korok, and(eq(korok.id, finds.korokId), eq(korok.isFindable, true)))
 		.groupBy(user.id)
 		.orderBy(desc(count(finds.id)), asc(max(finds.time)));
-	return userStats;
+
+	const lastFinds = await db
+		.select({ userId: finds.userId, number: korok.number })
+		.from(finds)
+		.innerJoin(korok, eq(korok.id, finds.korokId))
+		.where(
+			sql`(${finds.userId}, ${finds.time}) IN (${sql.join(
+				userStats.filter((s) => s.lastFoundAt).map((s) => sql`(${s.user.id}, ${s.lastFoundAt})`),
+				sql`, `
+			)})`
+		);
+
+	const byUser = new Map(lastFinds.map((f) => [f.userId, f.number]));
+
+	return userStats.map((s) => ({ ...s, lastKorokNumber: byUser.get(s.user.id) ?? null }));
 });
 
 export const getMyFinds = query(v.object({ userId: v.string() }), async (e) => {

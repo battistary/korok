@@ -77,8 +77,10 @@
 	let newLeaderboardDescription = $state('');
 	let joinLeaderboard = $state(false);
 	let createLeaderboard = $state(false);
-
 	let name = $derived(myLeaderboards.find((l) => l.id === leaderboard)?.name);
+
+    const formatLastFind = (d: Date) =>
+        `${d.toLocaleDateString()} at ${d.toLocaleTimeString()}`;
 </script>
 
 <div class="mx-auto max-w-4xl px-4 py-8">
@@ -232,9 +234,14 @@
 										{player.user.subtext}
 									</p>
 								{:else if player.lastFoundAt}
-									<p class="mt-0.5 text-sm text-muted-foreground">
+									<p class="inline mt-0.5 text-sm text-muted-foreground">
 										Last find:
-										{player.lastFoundAt.toLocaleString()}
+									</p>
+                                    <p class="inline mt-0.5 font-[hylia] text-foreground">
+                                        #{String(player.lastKorokNumber).padStart(3, '0')}
+                                    </p>
+                                    <p class="inline mt-0.5 text-sm text-muted-foreground">
+										on {formatLastFind(player.lastFoundAt)}
 									</p>
 								{:else}
 									<p class="mt-0.5 text-sm text-muted-foreground">No Koroks found</p>
