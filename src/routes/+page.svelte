@@ -87,7 +87,7 @@
 				<div
 					class="rounded-full border-2 border-border bg-primary px-5 py-2.5 font-black text-primary-foreground shadow-sm"
 				>
-					<img class="inline" src="seed.png" alt="Korok seed"/> Find Koroks
+					<img class="inline h-6" src="/seed.png" alt="Korok seed"/> Find Koroks
 				</div>
                 </a>
 
@@ -95,7 +95,7 @@
 				<div
 					class="rounded-full border-2 border-border bg-secondary px-5 py-2.5 font-black text-secondary-foreground shadow-sm"
 				>
-					<Trophy class="inline" /> Compete for the Top 3
+					<Trophy class="inline h-6" /> Compete for the Top 3
 				</div>
                 </a>
 			</div>

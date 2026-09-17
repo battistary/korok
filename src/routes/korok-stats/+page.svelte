@@ -1,7 +1,8 @@
-<script>
+<script lang="ts">
 	import { tripleNumber } from '$lib/utils';
 	import * as Card from '$lib/components/ui/card/';
-	import { getKorokFinds } from '../query/korok.remote';
+	import { getKorokFinds, getMyFoundKorokIds } from '../query/korok.remote';
+    import type { PageProps } from './$types';
 	import Toggle from '#lib/components/ui/toggle/toggle.svelte';
 	import { ArrowDown01, ArrowUp01 } from 'lucide-svelte';
 
@@ -21,6 +22,8 @@
 			return 0;
 		})
 	);
+    let { data }: PageProps = $props();
+    let foundIds = new Set(await getMyFoundKorokIds());
 </script>
 
 <div class="mx-auto max-w-4xl px-4 py-8">
@@ -34,11 +37,16 @@
 	<!-- Leaderboard -->
 	<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
 		<Card.Header class="-m-[1px] border-b-2 border-border bg-secondary/60 px-6 py-5">
-			<div class="flex items-center justify-between">
-				<div>
-                    <img class="inline" src="seed.png" alt="Korok seed"/><Card.Title class="inline text-2xl font-black px-2">Korok Rankings</Card.Title>
-					<Card.Description class="mt-1">Ranked by {sortMode === 'Number' ? 'Korok number' : 'number of finds'}</Card.Description>
-				</div>
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <img class="w-10 h-9" src="korok_seed_icon.png" alt="Korok seed" />
+                        <Card.Title class="text-2xl font-black">Korok Rankings</Card.Title>
+                    </div>
+                    <Card.Description class="mt-1">
+                        Ranked by {sortMode === 'Number' ? 'Korok number' : 'number of finds'}
+                    </Card.Description>
+                </div>
 				<div class="flex flex-col items-end gap-2">
 					<div class="rounded-full border-2 border-border bg-background px-4 py-2 font-bold">
                         {sortedKoroks.length} Korok{sortedKoroks.length !== 1 ? 's' : ''}
@@ -65,11 +73,10 @@
 			<div class="flex flex-col gap-3">
 				{#each sortedKoroks as korok, index (korok.korok.id)}
 					{@const rank = index + 1}
-
 					<div
 						class="group relative overflow-hidden rounded-xl border-2 border-border/70 bg-secondary/60 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
 					>
-						<div class="relative flex items-center gap-4">
+                        <div class="relative flex items-center gap-4">
 							<!-- Rank -->
 							<div
 								class={`flex size-12 shrink-0 items-center justify-center rounded-full border-2 p-1 font-black ${
@@ -92,16 +99,21 @@
 							</div>
 
 							<!-- Korok number -->
-							<div class="min-w-0 flex-1">
-								<p class="text-sm font-[hylia] tracking-wider text-muted-foreground uppercase">
-									Korok
-								</p>
+                            <div class="min-w-0 flex-1 flex items-center gap-4">
+                                <div>
+                                    <p class="text-sm font-[hylia] tracking-wider text-muted-foreground uppercase">
+                                        Korok
+                                    </p>
+                                    <p class="text-2xl font-[hylia] text-foreground">
+                                        #{tripleNumber(korok.korok.number)}
+                                    </p>
+                                </div>
 
-								<p class="text-2xl font-[hylia] text-foreground">
-									#{tripleNumber(korok.korok.number)}
-								</p>
-							</div>
-
+                                {#if foundIds.has(korok.korok.id)}
+                                    <img src="/korok_seed_icon.png" alt="Found" class="h-9 w-10" />
+                                {/if}
+                            </div>
+							
 							<!-- Finds -->
 							<div class="text-right">
 								<p class="text-3xl font-black text-primary">
@@ -125,6 +137,6 @@
             Made by RPI students, for RPI students.<br>
             Not endorsed or sponsored by Rensselaer Polytechnic Institute.<br>
             The code for this website can be found <a style="text-decoration: underline;" class="text-primary" href="https://github.com/battistary/korok">here</a>.
-        </p> 
+        </p>
     </section>
 </div>

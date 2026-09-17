@@ -308,6 +308,16 @@ export const getMyFinds = query(v.object({ userId: v.string() }), async (e) => {
 	return userStats[0];
 });
 
+export const getMyFoundKorokIds = query(async () => {
+	const user = await getCurrentUser();
+	if (!user) return [];
+	const rows = await db
+		.select({ korokId: finds.korokId })
+		.from(finds)
+		.where(eq(finds.userId, user.id));
+	return rows.map((r) => r.korokId);
+});
+
 export const logFind = command(
 	v.object({
 		korokId: v.string(),

@@ -148,18 +148,21 @@
 		<Card.Header class="-m-px border-b-2 border-border bg-secondary/60 px-6 py-5">
 			<div class="flex items-center justify-between">
 				<div>
-					<Card.Title class="text-2xl font-black">
-						<!-- <Trophy class="inline" /> -->
-						<img alt="Hestu" src="/icons/hestu.png" class="inline w-15" />
-						{leaderboard === -1
-							? 'Hunter Rankings'
-							: myLeaderboards.find((l) => l.id === leaderboard)?.name}
-						{#if leaderboard !== -1}
-							<p class="text-xl">
-								Join: #{myLeaderboards.find((l) => l.id === leaderboard)?.code}
-							</p>
-						{/if}
-					</Card.Title>
+                    <Card.Title class="text-2xl font-black">
+                        <div class="flex items-center gap-2">
+                            <img alt="Hestu" src="/icons/hestu.png" class="h-12" />
+                            <span>
+                                {leaderboard === -1
+                                    ? 'Hunter Rankings'
+                                    : myLeaderboards.find((l) => l.id === leaderboard)?.name}
+                            </span>
+                        </div>
+                        {#if leaderboard !== -1}
+                            <p class="text-xl">
+                                Join: #{myLeaderboards.find((l) => l.id === leaderboard)?.code}
+                            </p>
+                        {/if}
+                    </Card.Title>
 
 					<Card.Description class="mt-1">
 						{leaderboard === -1
@@ -174,7 +177,7 @@
 						{hunterCount} Hunter{hunterCount !== 1 ? 's' : ''}
 					</div>
 					<div class="flex w-30 flex-wrap justify-end gap-2 lg:w-50">
-						<InputGroup.Root class="bg-background ">
+						<InputGroup.Root class="bg-background">
 							<InputGroup.Input bind:value={filterValue} placeholder="Search..." />
 							<InputGroup.Addon>
 								<SearchIcon />

@@ -49,7 +49,7 @@
 			    class="inline mr-5 rounded border bg-secondary/60 p-1 px-3 font-[hylia] whitespace-nowrap text-secondary-foreground shadow-sm"
     		>
 	    		{data.user?.name}:
-                <img class="inline h-5" alt="Korok seed" src="seed.png">
+                <img class="inline h-5" alt="Korok seed" src="korok_seed_icon.png">
 		    </span>
         {:else}
 		    <span
