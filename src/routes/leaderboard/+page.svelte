@@ -80,7 +80,7 @@
 	let name = $derived(myLeaderboards.find((l) => l.id === leaderboard)?.name);
 
     const formatLastFind = (d: Date) =>
-        `${d.toLocaleDateString()} at ${d.toLocaleTimeString()}`;
+    `${d.toLocaleDateString([], { month: 'numeric', day: 'numeric' })} at ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
 </script>
 
 <div class="mx-auto max-w-4xl px-4 py-8">
