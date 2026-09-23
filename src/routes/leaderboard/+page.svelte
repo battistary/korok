@@ -173,7 +173,7 @@
 				</div>
 
 				<div class="flex flex-col items-end gap-2">
-					<div class="grow rounded-full border-2 border-border bg-background px-4 py-2 font-bold">
+					<div class="grow rounded-full border-2 border-border bg-background px-3 py-2 font-bold">
 						{hunterCount} Hunter{hunterCount !== 1 ? 's' : ''}
 					</div>
 					<div class="flex w-30 flex-wrap justify-end gap-2 lg:w-50">
