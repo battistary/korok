@@ -64,7 +64,7 @@
 		</div>
 
 		<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
-			<Card.Header class="border-b-2 border-border bg-secondary/60 px-6 py-5">
+			<Card.Header class="-m-[1px] border-b-2 border-border bg-secondary/60 px-6 py-5">
 				<div class="flex items-center justify-between">
 					<div>
 						<Card.Title class="font-black text-2xl">
@@ -109,12 +109,17 @@
 						</div>
 					{:else}
 						<div>
-							<img
-								class="h-80"
-								src={`/koroks/k_${korok?.type}.png`}
-								alt={korok?.number.toString()}
-                                on:click={() => playSound('/sounds/yahaha.mp3')}
-							/>
+                            <button
+                                type="button"
+                                class="cursor-pointer border-0 bg-transparent p-0"
+                                onclick={() => playSound('/sounds/yahaha.mp3')}
+                            >
+                                <img
+                                    class="h-80"
+                                    src={`/koroks/k_${korok?.type}.png`}
+                                    alt={`Korok #${tripleNumber(korok?.number)}`}
+                                />
+                            </button>
                             <p class="text-center">(Click me for a yahaha!)</p>
 						</div>
 					{/if}
