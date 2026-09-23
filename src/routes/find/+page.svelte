@@ -9,6 +9,10 @@
 	import { browser } from '$app/env';
     import { goto, invalidate } from '$app/navigation';
 
+    function playSound(src: string) {
+        new Audio(src).play().catch(() => {});
+    }
+
 	let { data }: { data: PageData } = $props();
 	let failed = $state(false);
 	let found = $state(false);
@@ -69,8 +73,10 @@
 							{:else if failed}
 								Failed to find Korok.
 							{:else if found}
+                                {playSound('/sounds/korok_pop.mp3')}
 								You've already found me!
 							{:else}
+                                {playSound('/sounds/yahaha.mp3')}
 								Yahaha! You found me!
 							{/if}
 						</Card.Title>
@@ -107,7 +113,9 @@
 								class="h-80"
 								src={`/koroks/k_${korok?.type}.png`}
 								alt={korok?.number.toString()}
+                                on:click={() => playSound('/sounds/yahaha.mp3')}
 							/>
+                            <p class="text-center">(Click me for a yahaha!)</p>
 						</div>
 					{/if}
 				</div>
