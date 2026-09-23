@@ -591,7 +591,7 @@
 									<div class="flex items-center gap-4">
 										<!-- Rank -->
 										<div
-											class={`flex size-12 shrink-0 items-center justify-center rounded-full border-2 text-xl font-black ${
+											class={`flex size-15 shrink-0 items-center justify-center rounded-full border-2 text-xl font-black ${
 												rank === 1
 													? 'border-yellow-600 bg-yellow-400/30 text-yellow-800'
 													: rank === 2
