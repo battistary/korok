@@ -31,7 +31,7 @@
 								<img
 									src={event.backgroundImage}
 									alt=""
-									class="w-full object-fill"
+									class="pt-4 mx-auto w-auto object-fill"
 								/>
 							{/if}
 
