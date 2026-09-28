@@ -232,9 +232,39 @@
 				</div>
 			</Card.Content>
 		</Card.Root>
+	</section>	
+
+    <!-- Affiliates -->
+	<section class="mb-8">
+		<Card.Root class="overflow-hidden border-2 border-border bg-card shadow-lg">
+			<Card.Content class="flex flex-col items-center sm:flex-row">
+				<div>
+					<p class="text-sm font-black tracking-[0.25em] text-accent uppercase">Partners</p>
+
+					<h2 class="mt-1 text-3xl font-black text-foreground sm:text-4xl">Our Affiliates</h2>
+
+					<p class="mt-1 text-muted-foreground">Local businesses supporting the hunt.</p>
+				</div>
+
+				<div class="flex flex-1 justify-center">
+					<a
+						href="https://linktr.ee/troyrewind"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="group rounded-xl border-2 border-border/70 bg-secondary/60 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
+					>
+						<img
+							src="/rewind.png"
+							alt="Troy Rewind"
+							class="h-30 w-full transition-transform duration-200 group-hover:scale-105"
+						/>
+					</a>
+				</div>
+			</Card.Content>
+		</Card.Root>
 	</section>
 
-	<!-- Cheating notice -->
+    <!-- Cheating notice -->
 	<section>
 		<Card.Root class="border-2 border-destructive/40 bg-destructive/10 shadow-md">
 			<Card.Content class="flex gap-4 p-6">

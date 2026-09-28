@@ -1,7 +1,7 @@
-import { area, korok, finds, user, leaderBoardUsers, leaderBoards } from '$lib/server/db/schema';
+import { area, korok, finds, user, leaderBoardUsers, leaderBoards, events } from '$lib/server/db/schema';
 import { command, query } from '$app/server';
 import { db } from '$lib/server/db';
-import { and, asc, count, desc, eq, max, inArray, sql } from 'drizzle-orm';
+import { and, asc, count, desc, eq, isNull, max, inArray, sql } from 'drizzle-orm';
 import { getCurrentUser } from '$lib/server/auth';
 import * as v from 'valibot';
 
@@ -157,7 +157,8 @@ export const addKoroksAdmin = command(
 		lat: v.number(),
 		lng: v.number(),
 		release: v.number(),
-		isRelease: v.boolean()
+		isRelease: v.boolean(),
+        eventId: v.optional(v.nullable(v.number()))
 	}),
 	async (e) => {
 		const user = await getCurrentUser();
@@ -178,6 +179,7 @@ export const updateKoroksAdmin = command(
 		lng: v.number(),
 		release: v.number(),
 		isRelease: v.boolean(),
+        eventId: v.optional(v.nullable(v.number())),
 		id: v.string()
 	}),
 	async (e) => {
@@ -257,7 +259,7 @@ export const getKorokFinds = query(async () => {
 		})
 		.from(korok)
 		.leftJoin(finds, eq(finds.korokId, korok.id))
-		.where(eq(korok.isFindable, true))
+        .where(and(eq(korok.isFindable, true), isNull(korok.eventId)))
 		.groupBy(korok.id)
 		.orderBy(desc(count(finds.id)));
 	return korokStats;
@@ -267,29 +269,42 @@ export const getUserFinds = query(async () => {
 	const userStats = await db
 		.select({
 			user: user,
-			koroksFound: count(finds.id),
-			lastFoundAt: max(finds.time)
+			koroksFound: count(korok.id),
+            lastFoundAt: sql<number | null>`MAX(CASE WHEN ${korok.id} IS NOT NULL THEN ${finds.time} END)`
 		})
 		.from(user)
 		.leftJoin(finds, eq(finds.userId, user.id))
-		.leftJoin(korok, and(eq(korok.id, finds.korokId), eq(korok.isFindable, true)))
+        .leftJoin(korok, and(eq(korok.id, finds.korokId), eq(korok.isFindable, true), isNull(korok.eventId)))
 		.groupBy(user.id)
-		.orderBy(desc(count(finds.id)), asc(max(finds.time)));
+        .orderBy(desc(count(korok.id)), asc(sql`MAX(CASE WHEN ${korok.id} IS NOT NULL THEN ${finds.time} END)`));
 
-	const lastFinds = await db
-		.select({ userId: finds.userId, number: korok.number })
-		.from(finds)
-		.innerJoin(korok, eq(korok.id, finds.korokId))
-		.where(
-			sql`(${finds.userId}, ${finds.time}) IN (${sql.join(
-				userStats.filter((s) => s.lastFoundAt).map((s) => sql`(${s.user.id}, ${s.lastFoundAt})`),
-				sql`, `
-			)})`
-		);
+    const lastFinds = await db
+        .select({ userId: finds.userId, number: korok.number, time: finds.time })
+        .from(finds)
+        .innerJoin(
+            korok,
+            and(eq(korok.id, finds.korokId), eq(korok.isFindable, true), isNull(korok.eventId))
+        )
+        .orderBy(desc(finds.time));
 
-	const byUser = new Map(lastFinds.map((f) => [f.userId, f.number]));
+    const byUser = new Map<string, number>();
+    for (const f of lastFinds) {
+        if (!byUser.has(f.userId)) byUser.set(f.userId, f.number);
+    }
 
-	return userStats.map((s) => ({ ...s, lastKorokNumber: byUser.get(s.user.id) ?? null }));
+    const eventCounts = await db
+        .select({ userId: finds.userId, count: count(finds.id) })
+        .from(finds)
+        .innerJoin(korok, and(eq(korok.id, finds.korokId), sql`${korok.eventId} IS NOT NULL`))
+        .groupBy(finds.userId);
+    const eventByUser = new Map(eventCounts.map((r) => [r.userId, r.count]));
+
+    return userStats.map((s) => ({
+        ...s,
+        lastFoundAt: s.lastFoundAt != null ? new Date(s.lastFoundAt) : null,
+        lastKorokNumber: byUser.get(s.user.id) ?? null,
+        eventKoroksFound: eventByUser.get(s.user.id) ?? 0
+    }));
 });
 
 export const getMyFinds = query(v.object({ userId: v.string() }), async (e) => {
@@ -302,7 +317,7 @@ export const getMyFinds = query(v.object({ userId: v.string() }), async (e) => {
 		.from(user)
 		.leftJoin(finds, eq(finds.userId, user.id))
 		.leftJoin(korok, eq(korok.id, finds.korokId))
-		.where(and(eq(korok.isFindable, true), eq(finds.userId, e.userId)))
+    	.where(and(eq(korok.isFindable, true), eq(finds.userId, e.userId), isNull(korok.eventId)))
 		.groupBy(user.id)
 		.orderBy(desc(count(finds.id)), asc(max(finds.time)));
 	return userStats[0];
@@ -339,16 +354,32 @@ export const logFind = command(
 				time: e.time
 			});
 		}
-		const userStats = await db
-			.select({
-				user: user,
-				koroksFound: count(finds.id),
-				lastFoundAt: max(finds.time)
-			})
-			.from(user)
-			.leftJoin(finds, eq(finds.userId, user.id))
-			.groupBy(user.id)
-			.where(eq(finds.userId, e.userId));
+        let userStats;
+        if (k.eventId != null) {
+            userStats = await db
+                .select({
+                    user: user,
+                    koroksFound: count(korok.id),
+                    lastFoundAt: max(finds.time)
+                })
+                .from(user)
+                .leftJoin(finds, eq(finds.userId, user.id))
+                .leftJoin(korok, and(eq(korok.id, finds.korokId), sql`${korok.eventId} IS NOT NULL`))
+                .groupBy(user.id)
+                .where(eq(finds.userId, e.userId));
+        } else {
+            userStats = await db
+                .select({
+                    user: user,
+                    koroksFound: count(korok.id),
+                    lastFoundAt: max(finds.time)
+                })
+                .from(user)
+                .leftJoin(finds, eq(finds.userId, user.id))
+                .leftJoin(korok, and(eq(korok.id, finds.korokId), eq(korok.isFindable, true), isNull(korok.eventId)))
+                .groupBy(user.id)
+                .where(eq(finds.userId, e.userId));
+        }
 		const korokStats = await db
 			.select({
 				korok: korok,
@@ -378,18 +409,45 @@ export const getLeaderBoardFinds = query(v.object({ leaderBoardId: v.number() })
 	const userStats = await db
 		.select({
 			user: user,
-			koroksFound: count(finds.id),
-			lastFoundAt: max(finds.time)
+            koroksFound: count(korok.id),
+            lastFoundAt: sql<number | null>`MAX(CASE WHEN ${korok.id} IS NOT NULL THEN ${finds.time} END)`
 		})
 		.from(user)
 		.leftJoin(finds, eq(finds.userId, user.id))
-		.leftJoin(korok, and(eq(korok.id, finds.korokId), eq(korok.isFindable, true)))
+        .leftJoin(korok, and(eq(korok.id, finds.korokId), eq(korok.isFindable, true), isNull(korok.eventId)))
 		.leftJoin(leaderBoardUsers, eq(leaderBoardUsers.userId, user.id))
 		.leftJoin(leaderBoards, eq(leaderBoards.id, leaderBoardUsers.leaderBoardId))
 		.where(eq(leaderBoards.id, e.leaderBoardId))
 		.groupBy(user.id)
-		.orderBy(desc(count(finds.id)), asc(max(finds.time)));
-	return userStats;
+        .orderBy(desc(count(korok.id)), asc(sql`MAX(CASE WHEN ${korok.id} IS NOT NULL THEN ${finds.time} END)`));
+
+    const eventCounts = await db
+        .select({ userId: finds.userId, count: count(finds.id) })
+        .from(finds)
+        .innerJoin(korok, and(eq(korok.id, finds.korokId), sql`${korok.eventId} IS NOT NULL`))
+        .groupBy(finds.userId);
+    const eventByUser = new Map(eventCounts.map((r) => [r.userId, r.count]));
+
+    const lastFinds = await db
+        .select({ userId: finds.userId, number: korok.number, time: finds.time })
+        .from(finds)
+        .innerJoin(
+            korok,
+            and(eq(korok.id, finds.korokId), eq(korok.isFindable, true), isNull(korok.eventId))
+        )
+        .orderBy(desc(finds.time));
+
+    const byUser = new Map<string, number>();
+    for (const f of lastFinds) {
+        if (!byUser.has(f.userId)) byUser.set(f.userId, f.number);
+    }
+ 
+	return userStats.map((s) => ({
+		...s,
+		lastFoundAt: s.lastFoundAt != null ? new Date(s.lastFoundAt) : null,
+		lastKorokNumber: byUser.get(s.user.id) ?? null,
+		eventKoroksFound: eventByUser.get(s.user.id) ?? 0
+	}));
 });
 
 export const getMyLeaderboard = query(async () => {
@@ -476,6 +534,158 @@ export const leaveLeaderBoard = command(
 		return true;
 	}
 );
+
+export const getEvents = query(async () => {
+    const user = await getCurrentUser();
+    if (user?.role === 'admin') {
+        return await db.select().from(events).orderBy(desc(events.id));
+    }
+    return await db
+        .select()
+        .from(events)
+        .where(eq(events.isVisible, true))
+        .orderBy(desc(events.id));
+});
+
+export const getEvent = query(v.object({ id: v.number() }), async (e) => {
+    const row = await db.select().from(events).where(eq(events.id, e.id));
+    if (!row[0]) return null;
+    if (!row[0].isVisible) {
+        const user = await getCurrentUser();
+        if (user?.role !== 'admin') return null;
+    }
+    return row[0];
+});
+
+export const getEventLeaderBoardFinds = query(
+    v.object({ eventId: v.number() }),
+    async (e) => {
+        const userStats = await db
+            .select({
+                user: user,
+                koroksFound: count(korok.id),
+                lastFoundAt: max(finds.time)
+            })
+            .from(user)
+            .innerJoin(finds, eq(finds.userId, user.id))
+            .innerJoin(
+                korok,
+                and(
+                    eq(korok.id, finds.korokId),
+                    eq(korok.eventId, e.eventId),
+                    eq(korok.isFindable, true)
+                )
+            )
+            .groupBy(user.id)
+            .orderBy(desc(count(korok.id)), asc(max(finds.time)));
+
+        const lastFinds = await db
+            .select({ userId: finds.userId, number: korok.number, time: finds.time })
+            .from(finds)
+            .innerJoin(
+                korok,
+                and(
+                    eq(korok.id, finds.korokId),
+                    eq(korok.eventId, e.eventId),
+                    eq(korok.isFindable, true)
+                )
+            )
+            .orderBy(desc(finds.time));
+
+        const byUser = new Map<string, number>();
+        for (const f of lastFinds) {
+            if (!byUser.has(f.userId)) byUser.set(f.userId, f.number);
+        }
+
+        return userStats.map((s) => ({
+            ...s,
+            lastFoundAt: s.lastFoundAt != null ? new Date(s.lastFoundAt) : null,
+            lastKorokNumber: byUser.get(s.user.id) ?? null
+        }));
+    }
+);
+
+export const getEventKorokFinds = query(
+    v.object({ eventId: v.number() }),
+    async (e) => {
+        const korokStats = await db
+            .select({
+                korok: {
+                    id: korok.id,
+                    type: korok.type,
+                    number: korok.number,
+                    description: korok.description,
+                    isFindable: korok.isFindable,
+                    isRemoved: korok.isRemoved
+                },
+                findCount: count(finds.id)
+            })
+            .from(korok)
+            .leftJoin(finds, eq(finds.korokId, korok.id))
+            .where(and(eq(korok.eventId, e.eventId), eq(korok.isFindable, true)))
+            .groupBy(korok.id)
+            .orderBy(desc(count(finds.id)));
+        return korokStats;
+    }
+);
+
+export const addEvent = command(
+    v.object({
+        name: v.string(),
+        description: v.string(),
+        isActive: v.boolean(),
+        isVisible: v.boolean(),
+        backgroundImage: v.optional(v.nullable(v.string()))
+    }),
+    async (e) => {
+        const user = await getCurrentUser();
+        if (user?.role !== 'admin') return false;
+        await db.insert(events).values(e);
+        return true;
+    }
+);
+
+export const updateEvent = command(
+    v.object({
+        id: v.number(),
+        name: v.string(),
+        description: v.string(),
+        isActive: v.boolean(),
+        isVisible: v.boolean(),
+        backgroundImage: v.optional(v.nullable(v.string()))
+    }),
+    async (e) => {
+        const user = await getCurrentUser();
+        if (user?.role !== 'admin') return false;
+        await db
+        .update(events)
+        .set({
+            name: e.name,
+            description: e.description,
+            isActive: e.isActive,
+            isVisible: e.isVisible,
+            backgroundImage: e.backgroundImage
+        })
+        .where(eq(events.id, e.id));
+        return true;
+    }
+);
+
+export const deleteEvent = command(v.object({ id: v.number() }), async (e) => {
+    const user = await getCurrentUser();
+    if (user?.role !== 'admin') return false;
+
+    // Refuse if any koroks still reference this event
+    const attached = await db
+        .select({ id: korok.id })
+        .from(korok)
+        .where(eq(korok.eventId, e.id))
+        .limit(1);
+    if (attached[0]) return 'Cannot delete: koroks are still attached to this event.';
+
+    await db.delete(events).where(eq(events.id, e.id));
+    return true;
+});
 
 function generateRandomCode(length: number) {
 	let str = '';

@@ -79,7 +79,7 @@
                         <div class="relative flex items-center gap-4">
 							<!-- Rank -->
 							<div
-								class={`flex size-12 shrink-0 items-center justify-center rounded-full border-2 p-1 font-black ${
+								class={`flex size-15 shrink-0 items-center justify-center rounded-full border-2 p-1 font-black ${
                                     sortMode === 'Number'
                                         ? 'border-border bg-card text-muted-foreground'
                                         : rank === 1

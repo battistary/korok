@@ -39,7 +39,7 @@
 <header class="flex flex-wrap items-center border-b px-6 py-2 font-[hylia] lg:px-16 lg:py-0">
 	<div class="flex flex-1 items-center justify-between">
 		<a href="/">
-			<img style="min-width:48px;" class="h-12 w-12 drop-shadow-lg" alt="logo" src="korok_hunt_logo.png" />
+			<img style="min-width:48px;" class="h-12 w-12 drop-shadow-lg" alt="logo" src="/korok_hunt_logo.png" />
 		</a>
 	</div>
 
@@ -49,7 +49,7 @@
 			    class="inline mr-5 rounded border bg-secondary/60 p-1 px-3 font-[hylia] whitespace-nowrap text-secondary-foreground shadow-sm"
     		>
 	    		{data.user?.name}:
-                <img class="inline h-5" alt="Korok seed" src="korok_seed_icon.png">
+                <img class="inline h-5" alt="Korok seed" src="/korok_seed_icon.png">
 		    </span>
         {:else}
 		    <span
@@ -83,6 +83,7 @@
                 {/if}
                 {@render link({ href: '/leaderboard', label: 'Leaderboard' })}
                 {@render link({ href: '/korok-stats', label: 'Koroks' })}
+                {@render link({ href: '/events', label: 'Events' })}
 				{#if data.user?.role === 'admin'}
 					{@render link({ href: '/admin', label: 'Admin' })}
 				{/if}

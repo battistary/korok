@@ -7,14 +7,17 @@
 	import Button, { buttonVariants } from '#lib/components/ui/button/button.svelte';
 	import {
 		addAreaAdmin,
+        addEvent,
 		addKoroksAdmin,
 		deleteAllLeaderBoard,
 		deleteAreaAdmin,
+        deleteEvent,
 		deleteKoroksAdmin,
 		deleteReleaseKoroks,
 		deleteUser,
 		getAdminData,
 		getAreas,
+        getEvents,
 		getKoroksAdmin,
 		getUserFinds,
 		releaseFindableAdmin,
@@ -23,6 +26,7 @@
 		toggleAdmin,
 		toggleMuncher,
 		unreleaseKoroks,
+        updateEvent,
 		updateFindableAdmin,
 		updateKoroksAdmin,
 		resetUserKoroks,
@@ -39,11 +43,12 @@
 	import {
 		ArrowDown01,
 		ArrowUp01,
+        Crown,
+        Download,
 		Hamburger,
 		SearchIcon,
 		UserLock,
-		Leaf,
-		Download
+		Leaf
 	} from 'lucide-svelte';
 	import { iconImages, korokImages } from '$lib/generated/images';
 
@@ -54,6 +59,24 @@
 	let areas = $derived(areasPromise.current ?? []);
 
 	let markers = getKoroksAdmin();
+
+    let eventsPromise = getEvents();
+    let events = $derived(eventsPromise.current ?? []);
+    let openEvent = $state(false);
+    let changeEventId = $state<number | null>(null);
+    let eventEdit = $state<{
+        name: string;
+        description: string;
+        isActive: boolean;
+        isVisible: boolean;
+        backgroundImage: string | null;
+    }>({
+        name: '',
+        description: '',
+        isActive: true,
+        isVisible: false,
+        backgroundImage: null
+    });
 
 	let currentRelease = $state(-1);
 
@@ -121,6 +144,7 @@
 		type: number;
 		release: number;
 		isRelease: boolean;
+        eventId: number | null;
 	} = $state({
 		description: '',
 		lat: 0,
@@ -129,10 +153,14 @@
 		title: '',
 		release: 0,
 		type: 0,
-		isRelease: false
+		isRelease: false,
+        eventId: null
 	});
 
 	let adding = $state(false);
+
+    const formatLastFind = (d: Date) =>
+        `${d.toLocaleDateString([], { month: 'numeric', day: 'numeric' })} at ${d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
 </script>
 
 <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -286,6 +314,105 @@
 		</Card.Root>
 	</section>
 
+    <!-- Event Management -->
+    <section class="mb-8">
+        <Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
+            <Card.Header class="-m-[1px] border-b-2 border-border bg-secondary/60 px-6 py-5">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <Card.Title class="text-2xl font-black">Event Management</Card.Title>
+                        <Card.Description>
+                            {events.length} event{events.length !== 1 ? 's' : ''}
+                        </Card.Description>
+                    </div>
+                    <Button
+                        onclick={() => {
+                            changeEventId = null;
+                            eventEdit = { name: '', description: '', isActive: true, isVisible: false, backgroundImage: null };
+                            openEvent = true;
+                        }}
+                    >
+                        Create Event
+                    </Button>
+                </div>
+            </Card.Header>
+
+            <Card.Content class="p-4 sm:p-6">
+                <div class="flex flex-col gap-3">
+                    {#each events as event (event.id)}
+                        <div
+                            class="rounded-xl border-2 border-border/70 bg-secondary/60 p-4 transition-all hover:border-primary hover:shadow-md"
+                        >
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div class="min-w-0 flex-1">
+                                    <p class="font-[hylia] text-xl text-foreground">{event.name}</p>
+                                    <p class="mt-0.5 text-sm text-muted-foreground">{event.description}</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        class={`rounded-full border-2 px-3 py-1 text-xs font-black ${
+event.isActive
+? 'border-primary/40 bg-primary/15 text-primary'
+: 'border-border bg-card text-muted-foreground'
+}`}
+                                    >
+                                        {event.isActive ? 'Active' : 'Inactive'}
+                                    </span>
+                                    {#if !event.isVisible}
+                                        <span
+                                            class="rounded-full border-2 border-destructive/40 bg-destructive/15 px-3 py-1 text-xs font-black text-destructive"
+                                        >
+                                            Hidden
+                                        </span>
+                                    {/if}
+                                    <Button
+                                        variant="outline"
+                                        onclick={() => {
+                                            changeEventId = event.id;
+                                            eventEdit = {
+                                                name: event.name,
+                                                description: event.description,
+                                                isActive: event.isActive,
+                                                isVisible: event.isVisible,
+                                                backgroundImage: event.backgroundImage ?? null
+                                            };
+                                            openEvent = true;
+                                        }}
+                                    >
+                                        Edit
+                                    </Button>
+                                    <Button
+                                        variant="destructive"
+                                        onclick={async () => {
+                                            if (!confirm('Are you sure you want to delete this event?')) return;
+                                            const result = await deleteEvent({ id: event.id });
+                                            if (typeof result === 'string') {
+                                                alert(result);
+                                                return;
+                                            }
+                                            await eventsPromise.refresh();
+                                        }}
+                                    >
+                                        Delete
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    {/each}
+
+                    {#if events.length === 0}
+                        <div class="rounded-xl border-2 border-dashed border-border p-12 text-center">
+                            <p class="text-lg font-bold text-foreground">No events yet</p>
+                            <p class="mt-1 text-sm text-muted-foreground">
+                                Create one to start organizing event Koroks.
+                            </p>
+                        </div>
+                    {/if}
+                </div>
+            </Card.Content>
+        </Card.Root>
+    </section>
+
 	<!-- Map -->
 	<section class="mb-8">
 		<div class="mb-4 px-2">
@@ -330,7 +457,8 @@
 							number: nextNumber,
 							release: currentRelease === -1 ? 0 : currentRelease,
 							type: nextType,
-							isRelease: false
+							isRelease: false,
+                            eventId: null
 						};
 					}}
 					actions={{ newAreas: true, newKoroks: true, deleteAreas: true, deleteKoroks: true }}
@@ -380,7 +508,8 @@
 									number: nextNumber,
 									release: currentRelease === -1 ? 0 : currentRelease,
 									type: nextType,
-									isRelease: false
+									isRelease: false,
+                                    eventId: null
 								};
 							}}
 						>
@@ -400,7 +529,7 @@
 								<!-- Number and description -->
 								<div class="flex min-w-0 flex-1 items-center gap-4">
 									<div
-										class="flex size-12 shrink-0 items-center justify-center rounded-full border-2 border-border bg-card p-1 font-black"
+										class="flex size-15 shrink-0 items-center justify-center rounded-full border-2 border-border bg-card p-1 font-black"
 									>
 										<img
 											alt="korok"
@@ -426,7 +555,12 @@
 											</p>
 										{:else}
 											<p class="text-sm text-muted-foreground italic">No description</p>
-										{/if}
+                                        {/if}
+                                        {#if korok.eventId != null}
+                                            <p class="mt-0.5 text-sm font-semibold">
+                                                Event: {events.find((ev) => ev.id === korok.eventId)?.name ?? 'Unknown'}
+                                            </p>
+                                        {/if}
 									</div>
 								</div>
 
@@ -590,21 +724,30 @@
 								>
 									<div class="flex items-center gap-4">
 										<!-- Rank -->
-										<div
-											class={`flex size-15 shrink-0 items-center justify-center rounded-full border-2 text-xl font-black ${
-												rank === 1
-													? 'border-yellow-600 bg-yellow-400/30 text-yellow-800'
-													: rank === 2
-														? 'border-slate-400 bg-slate-300/40 text-slate-700'
-														: rank === 3
-															? 'border-orange-700 bg-orange-400/30 text-orange-800'
-															: 'border-border bg-card text-muted-foreground'
-											}`}
-										>
-											<div class="font-[hylia]">
-												#{rank}
-											</div>
-										</div>
+                                        <div class="relative shrink-0">
+                                            {#if rank === 1}
+                                                <Crown
+                                                    class="absolute -top-3 left-1/2 -translate-x-1/2 text-yellow-700 drop-shadow"
+                                                    size={26}
+                                                    fill="#facc15"
+                                                />
+                                            {/if}
+                                            <div
+                                                class={`flex size-15 items-center justify-center rounded-full border-2 text-xl font-black ${
+                                                    rank === 1
+                                                        ? 'border-yellow-600 bg-yellow-400/30 text-yellow-800'
+                                                        : rank === 2
+                                                            ? 'border-slate-400 bg-slate-300/40 text-slate-700'
+                                                            : rank === 3
+                                                                ? 'border-orange-700 bg-orange-400/30 text-orange-800'
+                                                                : 'border-border bg-card text-muted-foreground'
+                                                }`}
+                                            >
+                                                <div class="font-[hylia]">
+                                                    #{rank}
+                                                </div>
+                                            </div>
+                                        </div>
 
 										<!-- Player -->
 										<div class="min-w-0 flex-1">
@@ -617,14 +760,17 @@
 												{/if}
 											</p>
 
-											{#if player.lastFoundAt}
-												<p class="mt-0.5 text-sm text-muted-foreground">
-													Last find:
-													{player.lastFoundAt.toLocaleString()}
-												</p>
-											{:else}
-												<p class="mt-0.5 text-sm text-muted-foreground">No Koroks found</p>
-											{/if}
+                                            {#if player.lastFoundAt}
+                                                <p class="inline mt-0.5 text-sm text-muted-foreground">Last find:</p>
+                                                <p class="inline mt-0.5 font-[hylia] text-foreground">
+                                                    #{String(player.lastKorokNumber).padStart(3, '0')}
+                                                </p>
+                                                <p class="inline mt-0.5 text-sm text-muted-foreground">
+                                                    on {formatLastFind(player.lastFoundAt)}
+                                                </p>
+                                            {:else}
+                                                <p class="mt-0.5 text-sm text-muted-foreground">No Koroks found</p>
+                                            {/if}
 										</div>
 
 										<!-- Score -->
@@ -801,6 +947,31 @@
 					</Select.Content>
 				</Select.Root>
 			</div>
+            <div>
+                <Label for="event">Event</Label>
+                <Select.Root
+                    type="single"
+                    bind:value={() =>
+                        newKorok.eventId != null ? newKorok.eventId.toString() : 'none',
+                    (e) => (newKorok.eventId = e === 'none' ? null : Number(e))}
+                >
+                    <Select.Trigger class="w-full">
+                        {#if newKorok.eventId != null}
+                            {events.find((ev) => ev.id === newKorok.eventId)?.name ?? 'Unknown Event'}
+                        {:else}
+                            None (regular Korok)
+                        {/if}
+                    </Select.Trigger>
+                    <Select.Content>
+                        <Select.Item value="none">None (regular Korok)</Select.Item>
+                        {#each events as event (event.id)}
+                            <Select.Item value={event.id.toString()}>
+                                {event.name}
+                            </Select.Item>
+                        {/each}
+                    </Select.Content>
+                </Select.Root>
+            </div>
 
 			<div
 				class="flex items-center justify-between rounded-xl border-2 border-border bg-muted/50 p-4"
@@ -938,4 +1109,84 @@
 			</Dialog.Footer>
 		</div></Dialog.Content
 	>
+</Dialog.Root>
+<Dialog.Root bind:open={openEvent}>
+    <Dialog.Content class="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <Dialog.Header>
+            <Dialog.Title class="text-2xl font-black">
+                {changeEventId ? 'Edit Event' : 'Create Event'}
+            </Dialog.Title>
+            <Dialog.Description>
+                {changeEventId
+                    ? 'Update this event\'s details and status.'
+                    : 'Add a new event for special Korok hunts.'}
+            </Dialog.Description>
+        </Dialog.Header>
+
+        <div class="flex flex-col gap-4">
+            <div>
+                <Label for="event-name">Name</Label>
+                <Input id="event-name" bind:value={eventEdit.name} placeholder="Event name" />
+            </div>
+
+            <div>
+                <Label for="event-desc">Description</Label>
+                <Input id="event-desc" bind:value={eventEdit.description} placeholder="Description" />
+            </div>
+
+            <div>
+                <Label for="event-bg">Background Image Path</Label>
+                <Input
+                    id="event-bg"
+                    bind:value={eventEdit.backgroundImage}
+                    placeholder="/events/spring-hunt.png"
+                />
+                <p class="mt-1 text-xs text-muted-foreground">
+                    Path to a file in <code>/static</code>. Leave blank for the default card.
+                </p>
+            </div>
+
+            <div
+                class="flex items-center justify-between rounded-xl border-2 border-border bg-muted/50 p-4"
+            >
+                <div>
+                    <p class="font-bold">Active</p>
+                    <p class="text-sm text-muted-foreground">Show this event as currently running.</p>
+                </div>
+                <Switch id="isActive" type="checkbox" bind:checked={eventEdit.isActive} />
+            </div>
+            <div
+                class="flex items-center justify-between rounded-xl border-2 border-border bg-muted/50 p-4"
+            >
+                <div>
+                    <p class="font-bold">Visible</p>
+                    <p class="text-sm text-muted-foreground">
+                        Show this event on the public events page. Turn off to keep it hidden while building.
+                    </p>
+                </div>
+                <Switch id="isVisible" type="checkbox" bind:checked={eventEdit.isVisible} />
+            </div>
+        </div>
+
+        <Dialog.Footer>
+            <Dialog.Close
+                onclick={async () => {
+                    const payload = {
+                        ...eventEdit,
+                        backgroundImage: eventEdit.backgroundImage?.trim() ? eventEdit.backgroundImage : null
+                    };
+                    if (changeEventId) {
+                        await updateEvent({ id: changeEventId, ...payload });
+                    } else {
+                        await addEvent(payload);
+                    }
+                    await eventsPromise.refresh();
+                    changeEventId = null;
+                }}
+                class={cn('font-black', buttonVariants({ variant: 'default' }))}
+            >
+                {changeEventId ? 'Save Changes' : 'Create Event'}
+            </Dialog.Close>
+        </Dialog.Footer>
+    </Dialog.Content>
 </Dialog.Root>

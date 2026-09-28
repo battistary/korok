@@ -15,7 +15,8 @@ export const korok = sqliteTable('korok', {
 	release: integer('release').notNull(),
 	isRelease: integer('is-release', { mode: 'boolean' }).notNull(),
 	isFindable: integer('is-findable', { mode: 'boolean' }).default(true).notNull(),
-	isRemoved: integer('is-removed', { mode: 'boolean' }).default(false).notNull()
+	isRemoved: integer('is-removed', { mode: 'boolean' }).default(false).notNull(),
+    eventId: integer('event-id').references(() => events.id)
 });
 
 export const area = sqliteTable('area', {
@@ -45,6 +46,15 @@ export const leaderBoards = sqliteTable('leader-board', {
 export const leaderBoardUsers = sqliteTable('leader-board-users', {
 	leaderBoardId: integer('leader-board-id'),
 	userId: text('user-id')
+});
+
+export const events = sqliteTable('event', {
+    id: integer('id').primaryKey({ autoIncrement: true }),
+    name: text('name').notNull(),
+    description: text('description').notNull(),
+    isActive: integer('is-active', { mode: 'boolean' }).default(true).notNull(),
+    backgroundImage: text('background-image'),
+    isVisible: integer('is-visible', { mode: 'boolean' }).default(false).notNull()
 });
 
 export const userRelations = relations(user, ({ many }) => ({

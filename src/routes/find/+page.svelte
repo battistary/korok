@@ -28,7 +28,9 @@
 		lng: number;
 		release: number;
 		isRelease: boolean;
+        eventId: number | null;
 	} | null = $state(null);
+    let isEvent = $derived(korok?.eventId != null);
 	onMount(async () => {
 		if (!browser) return;
         if (!data.user) {
@@ -87,7 +89,7 @@
 							{:else if failed}
 								This Korok is not valid. Please check if it belongs to this hunt and try again.
 							{:else}
-								<strong>You have found {yourFinds} Korok{yourFinds !== 1 ? 's' : ''}!</strong><br />
+                                <strong>You have found {yourFinds} {isEvent ? 'Event ' : ''}Korok{yourFinds !== 1 ? 's' : ''}!</strong><br />
 								{korokFinds - 1} other player{(korokFinds - 1) === 1 ? ' has' : 's have'} found this Korok.
 							{/if}
 						</Card.Description>

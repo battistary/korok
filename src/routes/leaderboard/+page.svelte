@@ -1,6 +1,6 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card/';
-	import { ArrowDown01, ArrowUp01, SearchIcon } from 'lucide-svelte';
+	import { ArrowDown01, ArrowUp01, Crown, SearchIcon } from 'lucide-svelte';
 	import {
 		getLeaderBoardFinds,
 		getMyLeaderboard,
@@ -203,28 +203,37 @@
 						class="group relative overflow-hidden rounded-xl border-2 border-border/70 bg-secondary/60 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
 					>
 						<div class="flex items-center gap-4">
-							<!-- Rank -->
-							<div
-								class={`flex size-15 shrink-0 items-center justify-center rounded-full border-2 p-1 font-[hylia] text-xl font-black ${
-									rank === 1
-										? 'border-yellow-600 bg-yellow-400/30 text-yellow-800'
-										: rank === 2
-											? 'border-slate-400 bg-slate-300/40 text-slate-700'
-											: rank === 3
-												? 'border-orange-700 bg-orange-400/30 text-orange-800'
-												: 'border-border bg-card text-muted-foreground'
-								}`}
-							>
-								{#if player.user.icon}
-									<img
-										class="h-auto max-h-full max-w-full"
-										src={player.user.icon}
-										alt={player.user.name}
-									/>
-								{:else}
-									#{rank}
-								{/if}
-							</div>
+                            <!-- Rank -->
+                            <div class="relative shrink-0">
+                                {#if rank === 1}
+                                    <Crown
+                                        class="absolute -top-3 left-1/2 -translate-x-1/2 text-yellow-700 drop-shadow"
+                                        size={26}
+                                        fill="#facc15"
+                                    />
+                                {/if}
+                                <div
+                                    class={`flex size-15 items-center justify-center rounded-full border-2 p-1 font-[hylia] text-xl font-black ${
+                                        rank === 1
+                                            ? 'border-yellow-600 bg-yellow-400/30 text-yellow-800'
+                                            : rank === 2
+                                                ? 'border-slate-400 bg-slate-300/40 text-slate-700'
+                                                : rank === 3
+                                                    ? 'border-orange-700 bg-orange-400/30 text-orange-800'
+                                                    : 'border-border bg-card text-muted-foreground'
+                                    }`}
+                                >
+                                    {#if player.user.icon}
+                                        <img
+                                            class="h-auto max-h-full max-w-full"
+                                            src={player.user.icon}
+                                            alt={player.user.name}
+                                        />
+                                    {:else}
+                                        #{rank}
+                                    {/if}
+                                </div>
+                            </div>
 
 							<!-- Player -->
 							<div class="min-w-0 flex-1">
