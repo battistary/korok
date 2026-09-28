@@ -115,6 +115,10 @@
 		return all;
 	});
 
+    let hunterCount = $derived(
+        sortedPlayers.filter((p) => p.user.role !== 'admin').length
+    );
+
 	$effect(() => {
 		if (currentRelease === -1) {
 			currentRelease = adminData[0]?.release ?? -1;
@@ -685,33 +689,35 @@ event.isActive
 
 	<section>
 		<Card.Root class="overflow-hidden border-2 border-border bg-card pt-0 shadow-lg">
-			<Card.Header class="-m-[1px] border-b-2 border-border bg-secondary/60 px-6 py-5">
-				<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-					<div>
-						<Card.Title class="text-2xl font-black">Players</Card.Title>
-
-						<Card.Description>Manage players</Card.Description>
-					</div>
-					<div class="flex flex-col items-end gap-2">
-						<div class="flex w-30 flex-wrap justify-end gap-2 lg:w-50">
-							<InputGroup.Root class="bg-background ">
-								<InputGroup.Input bind:value={filterValue} placeholder="Search..." />
-								<InputGroup.Addon>
-									<SearchIcon />
-								</InputGroup.Addon>
-							</InputGroup.Root>
-							<Toggle
-								class="hover:bg-primary-100 w-8 bg-primary font-bold text-primary-foreground aria-pressed:bg-primary"
-								variant="outline"
-								pressed={sortDir === 'desc'}
-								onPressedChange={(e) => (sortDir = e ? 'desc' : 'asc')}
-							>
-								{#if sortDir === 'desc'}<ArrowDown01 />{:else}<ArrowUp01 />{/if}
-							</Toggle>
-						</div>
-					</div>
-				</div>
-			</Card.Header>
+            <Card.Header class="-m-px border-b-2 border-border bg-secondary/60 px-6 py-5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <Card.Title class="text-2xl font-black">Hunters</Card.Title>
+                        <Card.Description>Manage hunters</Card.Description>
+                    </div>
+                    <div class="flex flex-col items-end gap-2">
+                        <div class="grow rounded-full border-2 border-border bg-background px-3 py-2 font-bold">
+                            {hunterCount} Hunter{hunterCount !== 1 ? 's' : ''}
+                        </div>
+                        <div class="flex w-30 flex-wrap justify-end gap-2 lg:w-50">
+                            <InputGroup.Root class="bg-background ">
+                                <InputGroup.Input bind:value={filterValue} placeholder="Search..." />
+                                <InputGroup.Addon>
+                                    <SearchIcon />
+                                </InputGroup.Addon>
+                            </InputGroup.Root>
+                            <Toggle
+                                class="hover:bg-primary-100 w-8 bg-primary font-bold text-primary-foreground aria-pressed:bg-primary"
+                                variant="outline"
+                                pressed={sortDir === 'desc'}
+                                onPressedChange={(e) => (sortDir = e ? 'desc' : 'asc')}
+                            >
+                                {#if sortDir === 'desc'}<ArrowDown01 />{:else}<ArrowUp01 />{/if}
+                            </Toggle>
+                        </div>
+                    </div>
+                </div>
+            </Card.Header>
 
 			<Card.Content class="p-4 sm:p-6">
 				<div class="flex max-h-100 flex-col gap-3 overflow-auto">
@@ -722,9 +728,9 @@ event.isActive
 								<div
 									class={`group relative overflow-hidden rounded-xl border-2 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${'bg-secondary/60'}`}
 								>
-									<div class="flex items-center gap-4">
+									<div class="flex items-center">
 										<!-- Rank -->
-                                        <div class="relative shrink-0">
+                                        <div class="relative mr-4 shrink-0">
                                             {#if rank === 1}
                                                 <Crown
                                                     class="absolute -top-3 left-1/2 -translate-x-1/2 text-yellow-700 drop-shadow"
@@ -751,7 +757,7 @@ event.isActive
 
 										<!-- Player -->
 										<div class="min-w-0 flex-1">
-											<p class="truncate font-[hylia] text-xl text-foreground">
+											<p class="break-all font-[hylia] text-xl text-foreground">
 												{player.user.name}
 												{#if player.user.role === 'admin'}
 													<span class="inline" title="Admin"><UserLock /></span>

@@ -124,9 +124,9 @@
 						<div
 							class="group relative overflow-hidden rounded-xl border-2 border-border/70 bg-secondary/60 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
 						>
-							<div class="flex items-center gap-4">
+							<div class="flex items-center">
 								<!-- Rank -->
-                                <div class="relative shrink-0">
+                                <div class="relative mr-4 shrink-0">
                                     {#if rank === 1}
                                         <Crown
                                             class="absolute -top-3 left-1/2 -translate-x-1/2 text-yellow-700 drop-shadow"
@@ -159,7 +159,7 @@
 
 								<!-- Player -->
 								<div class="min-w-0 flex-1">
-									<p class="font-[hylia] text-xl text-foreground">
+									<p class="break-all font-[hylia] text-xl text-foreground">
 										{player.user.name}
 									</p>
 
