@@ -148,7 +148,7 @@
                                         {#if player.user.icon}
                                             <img
                                                 class="h-auto max-h-full max-w-full"
-                                                src={player.user.icon}
+                                                src="/{player.user.icon}"
                                                 alt={player.user.name}
                                             />
                                         {:else}
