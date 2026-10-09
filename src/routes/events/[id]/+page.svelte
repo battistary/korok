@@ -9,7 +9,7 @@
 		getEventKorokFinds,
 		getMyFoundKorokIds
 	} from '../../query/korok.remote';
-	import { tripleNumber } from '$lib/utils';
+	import { korokImageSrc, tripleNumber } from '$lib/utils';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -254,9 +254,9 @@
 									class="flex size-15 shrink-0 items-center justify-center rounded-full border-2 border-border bg-card p-1 font-black"
 								>
 									<img
-										class="h-auto max-h-full max-w-full"
-										src={`/koroks/k_${korok.korok.type}.png`}
-										alt=""
+                                        class="h-auto max-h-full max-w-full"
+                                        src={korokImageSrc(korok.korok.type, event.id)}
+                                        alt=""
 									/>
 								</div>
 

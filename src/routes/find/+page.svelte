@@ -4,7 +4,7 @@
 	import { logFind } from '../query/korok.remote';
 	import type { PageData } from './$types';
 	import { CircleUserRound } from 'lucide-svelte';
-	import { tripleNumber } from '$lib/utils';
+	import { korokImageSrc, tripleNumber } from '$lib/utils';
 	import Spinner from '#lib/components/ui/spinner/spinner.svelte';
 	import { browser } from '$app/env';
     import { goto, invalidate } from '$app/navigation';
@@ -118,7 +118,7 @@
                             >
                                 <img
                                     class="h-80"
-                                    src={`/koroks/k_${korok?.type}.png`}
+                                    src={korokImageSrc(korok?.type ?? 0, korok?.eventId ?? null)}
                                     alt={`Korok #${tripleNumber(korok?.number)}`}
                                 />
                             </button>

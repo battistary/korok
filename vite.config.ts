@@ -26,13 +26,7 @@ export const iconImages = ${JSON.stringify(files.map((file) => `icons/${file}`))
 
 			const files2 = fs
 				.readdirSync(dir2)
-				.filter((file) => {
-					if (/k_(0|[1-9][0-9]*)\.(png|jpe?g|webp|gif)$/i.test(file)) {
-						return true;
-					}
-					console.error(`Skipping ${file}`);
-					return false;
-				})
+                .filter((file) => /k_(0|[1-9][0-9]*)\.(png|jpe?g|webp|gif)$/i.test(file))
 				.sort(
 					(a, b) =>
 						Number(a.match(/(?<=k_)(0|[1-9][0-9]*)(?=\.png|\.jpe?g|\.webp|\.gif)/)?.[0] ?? 0) -

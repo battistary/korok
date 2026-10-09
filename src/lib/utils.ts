@@ -8,15 +8,26 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
+const EVENT_SUFFIXES: Record<number, string> = {
+	1: 'arcade'
+};
+
+export const korokImageSrc = (type: number, eventId: number | null) => {
+	const suffix = eventId != null ? EVENT_SUFFIXES[eventId] : null;
+	return suffix ? `/koroks/k_${type}-${suffix}.png` : `/koroks/k_${type}.png`;
+};
+
 export async function generateQRCode({
 	id,
 	type,
 	number,
+	eventId,
 	canvasP
 }: {
 	id: string;
 	type: number;
 	number: number;
+	eventId?: number | null;
 	canvasP?: HTMLCanvasElement;
 }) {
 	const canvas = canvasP ?? document.createElement('canvas');
@@ -27,7 +38,7 @@ export async function generateQRCode({
 	const logo = new Image();
 
 	base.src = '/korok_sticker_base.png';
-	overlay.src = `/koroks/k_${type}.png`;
+    overlay.src = korokImageSrc(type, eventId ?? null);
 	logo.src = `/korok_hunt_logo.png`;
 
 	const f = new FontFace('hylia', 'url(/HyliaSerifBeta-Regular.ttf)');

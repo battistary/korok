@@ -35,7 +35,7 @@
 	import { Toggle } from '$lib/components/ui/toggle/index.js';
 	import * as Card from '$lib/components/ui/card';
 	import Switch from '#lib/components/ui/switch/switch.svelte';
-	import { cn, generateQRCode, tripleNumber } from '$lib/utils';
+	import { cn, generateQRCode, korokImageSrc, tripleNumber } from '$lib/utils';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import * as InputGroup from '$lib/components/ui/input-group/';
 	import * as ContextMenu from '$lib/components/ui/context-menu/index.js';
@@ -535,11 +535,11 @@ event.isActive
 									<div
 										class="flex size-15 shrink-0 items-center justify-center rounded-full border-2 border-border bg-card p-1 font-black"
 									>
-										<img
-											alt="korok"
-											class="h-auto max-h-full max-w-full"
-											src="koroks/k_{korok.type}.png"
-										/>
+                                        <img
+                                            alt="korok"
+                                            class="h-auto max-h-full max-w-full"
+                                            src={korokImageSrc(korok.type, korok.eventId)}
+                                        />
 									</div>
 
 									<div class="min-w-0">
@@ -620,11 +620,12 @@ event.isActive
 									<Button
 										variant="secondary"
 										onclick={async () => {
-											await generateQRCode({
-												id: korok.id,
-												type: korok.type,
-												number: korok.number
-											});
+                                            await generateQRCode({
+                                                id: korok.id,
+                                                type: korok.type,
+                                                number: korok.number,
+                                                eventId: korok.eventId
+                                            });
 										}}
 									>
 										Export Card
