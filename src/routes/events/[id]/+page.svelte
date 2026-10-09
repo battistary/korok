@@ -3,21 +3,16 @@
 	import { Toggle } from '$lib/components/ui/toggle/';
 	import * as InputGroup from '$lib/components/ui/input-group/';
 	import { ArrowDown01, ArrowUp01, Crown, SearchIcon } from 'lucide-svelte';
-	import {
-		getEvent,
-		getEventLeaderBoardFinds,
-		getEventKorokFinds,
-		getMyFoundKorokIds
-	} from '../../query/korok.remote';
 	import { korokImageSrc, tripleNumber } from '$lib/utils';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
-	let event = await getEvent({ id: data.id });
-	let players = (await getEventLeaderBoardFinds({ eventId: data.id })) ?? [];
-	let koroks = (await getEventKorokFinds({ eventId: data.id })) ?? [];
-	let foundIds = new Set(await getMyFoundKorokIds());
+	// `data` is replaced on every navigation, so $derived keeps these in sync.
+	let event = $derived(data.event);
+	let players = $derived(data.players);
+	let koroks = $derived(data.koroks);
+	let foundIds = $derived(data.foundIds);
 
 	// Leaderboard ranking — canonical, direction-agnostic
 	let rankedPlayers = $derived(players.map((player, i) => ({ player, rank: i + 1 })));
